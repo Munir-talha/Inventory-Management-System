@@ -1,7 +1,7 @@
 // app/api/products/[id]/route.js
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/connectDB';
-import Product from '@/models/products';
+import Product from '@/models/product';
 
 export async function PUT(req, { params }) {
     try {
