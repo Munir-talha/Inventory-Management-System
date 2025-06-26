@@ -11,7 +11,7 @@ export default function Home() {
         height={300}
         className="rounded-lg shadow-lg"
       />
-      <p className="mt-6 text-lg text-gray-600">You're logged in. Let's manage some products!</p>
+      <p className="mt-6 text-lg text-gray-600">{"You're logged in. Let's manage some products!"}</p>
     </div>
   );
 }
