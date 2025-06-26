@@ -38,8 +38,8 @@ export default function Sidebar() {
 
     const ProductLinks = (
         <div className="ml-6 mt-1 flex flex-col gap-1">
-            <NavItem href="/products/add" label="Add Product" icon={Plus} />
-            <NavItem href="/products" label="All Products" icon={List} />
+            <NavItem href="/dashboard/products" label="Add Product" icon={Plus} />
+            <NavItem href="/dashboard/products" label="All Products" icon={List} />
         </div>
     );
 

@@ -5,8 +5,11 @@ const categorySchema = new mongoose.Schema(
         name: { type: String, required: true },
         description: { type: String },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        collection: "product_category",
+    }
 );
 
-export default mongoose.models.product_categories ||
-    mongoose.model("product_categories", categorySchema);
+export default mongoose.models.ProductCategory ||
+    mongoose.model("ProductCategory", categorySchema);

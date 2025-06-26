@@ -7,6 +7,7 @@ export async function GET() {
     try {
         await connectDB();
         const products = await Product.find().populate('categoryId');
+        console.log(products);
         return NextResponse.json({ success: true, data: products });
     } catch (error) {
         return NextResponse.json({ success: false, message: 'Failed to fetch products' }, { status: 500 });
