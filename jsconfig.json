@@ -1,10 +1,9 @@
 {
   "compilerOptions": {
-    "baseUrl": ".", // ✅ this tells it where @ starts from
     "paths": {
       "@/*": [
-        "src/*"
-      ] // ✅ no need for './src/*'
+        "./src/*"
+      ]
     }
   }
 }
