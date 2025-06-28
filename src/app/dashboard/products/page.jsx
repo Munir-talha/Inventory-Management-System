@@ -1,5 +1,3 @@
-// app/dashboard/products/page.tsx (or .jsx if you're not using TypeScript)
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -20,19 +18,32 @@ const ProductsPage = () => {
     const [form, setForm] = useState({
         name: "",
         cost: "",
-        stock: "",
+        availableStock: "",
+        initialPurchaseQty: "",
+        isActive: true,
         categoryId: "",
     });
 
+    const resetForm = () => {
+        setForm({
+            name: "",
+            cost: "",
+            availableStock: "",
+            initialPurchaseQty: "",
+            isActive: true,
+            categoryId: "",
+        });
+    };
+
     const fetchProducts = async () => {
-        setLoading(true); // start loader
+        setLoading(true);
         try {
             const res = await axios.get("/api/products");
             setProducts(res.data.data);
         } catch (error) {
             console.error("Failed to fetch products:", error);
         } finally {
-            setLoading(false); // stop loader
+            setLoading(false);
         }
     };
 
@@ -49,7 +60,7 @@ const ProductsPage = () => {
             await axios.post("/api/products", form);
         }
         setOpen(false);
-        setForm({ name: "", cost: "", stock: "", categoryId: "" });
+        resetForm();
         setEditingProduct(null);
         fetchProducts();
     };
@@ -59,7 +70,9 @@ const ProductsPage = () => {
         setForm({
             name: product.name,
             cost: product.cost,
-            stock: product.stock,
+            availableStock: product.availableStock,
+            initialPurchaseQty: product.initialPurchaseQty,
+            isActive: product.isActive,
             categoryId: product.categoryId?._id || "",
         });
         setOpen(true);
@@ -76,7 +89,14 @@ const ProductsPage = () => {
                 <h1 className="text-2xl font-bold">Products</h1>
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
-                        <Button onClick={() => setEditingProduct(null)}>Add Product</Button>
+                        <Button
+                            onClick={() => {
+                                setEditingProduct(null);
+                                resetForm(); // 🛠️ reset form on Add click
+                            }}
+                        >
+                            Add Product
+                        </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6">
                         <DialogHeader>
@@ -85,6 +105,7 @@ const ProductsPage = () => {
                             </DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {/* name */}
                             <div className="space-y-2">
                                 <Label htmlFor="name">Name</Label>
                                 <Input
@@ -96,6 +117,8 @@ const ProductsPage = () => {
                                     required
                                 />
                             </div>
+
+                            {/* cost */}
                             <div className="space-y-2">
                                 <Label htmlFor="cost">Cost</Label>
                                 <Input
@@ -108,18 +131,48 @@ const ProductsPage = () => {
                                     required
                                 />
                             </div>
+
+                            {/* availableStock */}
                             <div className="space-y-2">
-                                <Label htmlFor="stock">Stock</Label>
+                                <Label htmlFor="availableStock">Available Stock</Label>
                                 <Input
-                                    id="stock"
+                                    id="availableStock"
                                     type="number"
-                                    placeholder="Enter stock"
+                                    placeholder="Enter available stock"
                                     className="bg-white text-black"
-                                    value={form.stock}
-                                    onChange={(e) => setForm({ ...form, stock: e.target.value })}
-                                    required
+                                    value={form.availableStock}
+                                    onChange={(e) => setForm({ ...form, availableStock: e.target.value })}
                                 />
                             </div>
+
+                            {/* initialPurchaseQty */}
+                            <div className="space-y-2">
+                                <Label htmlFor="initialPurchaseQty">Initial Purchase Qty</Label>
+                                <Input
+                                    id="initialPurchaseQty"
+                                    type="number"
+                                    placeholder="Enter initial quantity"
+                                    className="bg-white text-black"
+                                    value={form.initialPurchaseQty}
+                                    onChange={(e) => setForm({ ...form, initialPurchaseQty: e.target.value })}
+                                />
+                            </div>
+
+                            {/* isActive */}
+                            <div className="space-y-2">
+                                <Label htmlFor="isActive">Is Active</Label>
+                                <select
+                                    id="isActive"
+                                    value={form.isActive}
+                                    onChange={(e) => setForm({ ...form, isActive: e.target.value === "true" })}
+                                    className="w-full border border-gray-300 rounded px-3 py-2 bg-white text-black"
+                                >
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+
+                            {/* category */}
                             <div className="space-y-2">
                                 <Label htmlFor="category">Category</Label>
                                 <select
@@ -137,18 +190,17 @@ const ProductsPage = () => {
                                     ))}
                                 </select>
                             </div>
+
                             <Button type="submit" className="w-full">
                                 {editingProduct ? "Update" : "Add"} Product
                             </Button>
                         </form>
                     </DialogContent>
-
                 </Dialog>
             </div>
 
             {loading ? (
                 <div className="flex justify-center items-center py-10">
-                    {/* Replace this with a spinner or skeleton later */}
                     <div className="animate-spin h-6 w-6 border-4 border-t-transparent border-black rounded-full" />
                     <span className="ml-2 text-muted-foreground text-sm">Loading products...</span>
                 </div>
@@ -158,7 +210,9 @@ const ProductsPage = () => {
                         <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Cost</TableHead>
-                            <TableHead>Stock</TableHead>
+                            <TableHead>Available</TableHead>
+                            <TableHead>Initial Qty</TableHead>
+                            <TableHead>Active</TableHead>
                             <TableHead>Category</TableHead>
                             <TableHead>Created At</TableHead>
                             <TableHead>Action</TableHead>
@@ -169,7 +223,9 @@ const ProductsPage = () => {
                             <TableRow key={product._id}>
                                 <TableCell>{product.name}</TableCell>
                                 <TableCell>{product.cost}</TableCell>
-                                <TableCell>{product.stock}</TableCell>
+                                <TableCell>{product.availableStock}</TableCell>
+                                <TableCell>{product.initialPurchaseQty}</TableCell>
+                                <TableCell>{product.isActive ? "Yes" : "No"}</TableCell>
                                 <TableCell>{product.categoryId?.name || "-"}</TableCell>
                                 <TableCell>{new Date(product.createdAt).toLocaleDateString()}</TableCell>
                                 <TableCell>
