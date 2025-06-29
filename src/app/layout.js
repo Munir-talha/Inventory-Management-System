@@ -1,8 +1,6 @@
+// app/layout.js
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Inventory management System",
+  title: "Inventory Management System",
   description: "Designed By Talha",
 };
 
@@ -23,16 +21,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <div className="flex h-screen">
-          <Sidebar />
-          <div className="flex flex-col flex-1">
-            <Header />
-            <main className="flex-1 p-6 overflow-auto bg-gray-50">
-              {children}
-            </main>
-            <Footer />
-          </div>
-        </div>
+        {children}
       </body>
     </html>
   );

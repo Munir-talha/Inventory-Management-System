@@ -17,9 +17,9 @@ const ProductsPage = () => {
 
     const [form, setForm] = useState({
         name: "",
-        cost: "",
-        availableStock: "",
-        initialPurchaseQty: "",
+        cost: 0,
+        availableStock: 0,
+        initialPurchaseQty: 0,
         isActive: true,
         categoryId: "",
     });
@@ -27,9 +27,9 @@ const ProductsPage = () => {
     const resetForm = () => {
         setForm({
             name: "",
-            cost: "",
-            availableStock: "",
-            initialPurchaseQty: "",
+            cost: 0,
+            availableStock: 0,
+            initialPurchaseQty: 0,
             isActive: true,
             categoryId: "",
         });
@@ -40,6 +40,7 @@ const ProductsPage = () => {
         try {
             const res = await axios.get("/api/products");
             setProducts(res.data.data);
+            console.log("Fetched products:", res.data.data);
         } catch (error) {
             console.error("Failed to fetch products:", error);
         } finally {
@@ -54,10 +55,17 @@ const ProductsPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const payload = {
+            ...form,
+            cost: Number(form.cost),
+            availableStock: Number(form.availableStock),
+            initialPurchaseQty: Number(form.initialPurchaseQty),
+            isActive: form.isActive === true || form.isActive === "true", // ensure it's boolean
+        };
         if (editingProduct) {
-            await axios.put(`/api/products/${editingProduct._id}`, form);
+            await axios.put(`/api/products/${editingProduct._id}`, payload);
         } else {
-            await axios.post("/api/products", form);
+            await axios.post("/api/products", payload);
         }
         setOpen(false);
         resetForm();
@@ -70,10 +78,11 @@ const ProductsPage = () => {
         setForm({
             name: product.name,
             cost: product.cost,
-            availableStock: product.availableStock,
-            initialPurchaseQty: product.initialPurchaseQty,
+            availableStock: product.availableStock || 0,
+            initialPurchaseQty: product.initialPurchaseQty || 0,
             isActive: product.isActive,
             categoryId: product.categoryId?._id || "",
+
         });
         setOpen(true);
     };
@@ -86,13 +95,13 @@ const ProductsPage = () => {
     return (
         <div className="p-4">
             <div className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold">Products</h1>
+                <h1 className="text-2xl font-bold">Items</h1>
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
                         <Button
                             onClick={() => {
                                 setEditingProduct(null);
-                                resetForm(); // 🛠️ reset form on Add click
+                                resetForm();
                             }}
                         >
                             Add Product
@@ -154,7 +163,7 @@ const ProductsPage = () => {
                                     placeholder="Enter initial quantity"
                                     className="bg-white text-black"
                                     value={form.initialPurchaseQty}
-                                    onChange={(e) => setForm({ ...form, initialPurchaseQty: e.target.value })}
+                                    onChange={(e) => setForm({ ...form, initialPurchaseQty: Number(e.target.value) })}
                                 />
                             </div>
 
@@ -202,7 +211,7 @@ const ProductsPage = () => {
             {loading ? (
                 <div className="flex justify-center items-center py-10">
                     <div className="animate-spin h-6 w-6 border-4 border-t-transparent border-black rounded-full" />
-                    <span className="ml-2 text-muted-foreground text-sm">Loading products...</span>
+                    <span className="ml-2 text-muted-foreground text-sm">Loading items...</span>
                 </div>
             ) : (
                 <Table>
@@ -224,7 +233,7 @@ const ProductsPage = () => {
                                 <TableCell>{product.name}</TableCell>
                                 <TableCell>{product.cost}</TableCell>
                                 <TableCell>{product.availableStock}</TableCell>
-                                <TableCell>{product.initialPurchaseQty}</TableCell>
+                                <TableCell>{product?.initialPurchaseQty}</TableCell>
                                 <TableCell>{product.isActive ? "Yes" : "No"}</TableCell>
                                 <TableCell>{product.categoryId?.name || "-"}</TableCell>
                                 <TableCell>{new Date(product.createdAt).toLocaleDateString()}</TableCell>

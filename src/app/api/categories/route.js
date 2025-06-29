@@ -1,4 +1,3 @@
-// app/api/categories/route.js
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/connectDB';
 import Category from '@/models/product_categories';
@@ -6,10 +5,11 @@ import Category from '@/models/product_categories';
 export async function GET() {
     try {
         await connectDB();
-        const categories = await Category.find();
+        const categories = await Category.find().sort({ createdAt: -1 });
         return NextResponse.json({ success: true, data: categories });
     } catch (error) {
-        return NextResponse.json({ success: false, message: 'Failed to fetch categories' }, { status: 500 });
+        console.error("Fetch categories error:", error);
+        return NextResponse.json({ success: false, message: "Failed to fetch categories" }, { status: 500 });
     }
 }
 
@@ -20,6 +20,7 @@ export async function POST(req) {
         const category = await Category.create(body);
         return NextResponse.json({ success: true, data: category });
     } catch (error) {
-        return NextResponse.json({ success: false, message: 'Failed to create category' }, { status: 500 });
+        console.error("Create category error:", error);
+        return NextResponse.json({ success: false, message: "Failed to create category" }, { status: 500 });
     }
 }

@@ -1,11 +1,20 @@
-// src/app/login/page.jsx
 'use client';
 
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function LoginPage() {
+    const router = useRouter();
     const [form, setForm] = useState({ username: '', password: '' });
     const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        // Auto redirect if user already logged in
+        const user = localStorage.getItem('user');
+        if (user) {
+            router.push('/dashboard');
+        }
+    }, [router]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -17,12 +26,21 @@ export default function LoginPage() {
         });
 
         const data = await res.json();
-        setMessage(data.message);
+
+        if (data.success) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+            router.push('/dashboard/products');
+        } else {
+            setMessage(data.message);
+        }
     };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-            <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-md w-full max-w-sm">
+            <form
+                onSubmit={handleSubmit}
+                className="bg-white p-6 rounded-xl shadow-md w-full max-w-sm"
+            >
                 <h2 className="text-2xl font-semibold mb-4 text-center">Login</h2>
                 <input
                     type="text"
@@ -47,7 +65,7 @@ export default function LoginPage() {
                     Login
                 </button>
                 {message && (
-                    <p className="mt-4 text-center text-sm text-gray-700">{message}</p>
+                    <p className="mt-4 text-center text-sm text-red-500">{message}</p>
                 )}
             </form>
         </div>

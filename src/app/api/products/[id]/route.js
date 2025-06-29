@@ -6,9 +6,9 @@ import Product from '@/models/product';
 export async function PUT(req, { params }) {
     try {
         await connectDB();
-        const { id } = params;
+        const { id } = await params;
         const body = await req.json();
-
+        console.log('Updating product with ID:', id, 'Data:', body);
         const updatedProduct = await Product.findByIdAndUpdate(id, body, {
             new: true,
         });
