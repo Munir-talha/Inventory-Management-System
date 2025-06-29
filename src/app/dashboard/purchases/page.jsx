@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import DashboardStats from "@/components/dashboard/DashboardStats";
 
 import {
     Dialog,
@@ -92,8 +93,10 @@ export default function PurchasesPage() {
         }
     };
 
+    <DashboardStats />
     return (
         <div className="p-4">
+            <DashboardStats />
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Purchases</h1>
                 <Dialog open={open} onOpenChange={setOpen}>
