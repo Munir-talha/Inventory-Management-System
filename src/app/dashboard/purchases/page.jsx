@@ -36,6 +36,7 @@ export default function PurchasesPage() {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [error, setError] = useState("");
     const [filterDate, setFilterDate] = useState("");
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         axios.get("/api/products").then((res) => setProducts(res.data.data));
@@ -43,9 +44,17 @@ export default function PurchasesPage() {
     }, []);
 
     const fetchPurchases = async (date) => {
-        const url = date ? `/api/purchases?date=${date}` : "/api/purchases";
-        const res = await axios.get(url);
-        setPurchases(res.data.data);
+        try {
+            setLoading(true);
+            const url = date ? `/api/purchases?date=${date}` : "/api/purchases";
+            const res = await axios.get(url);
+            setPurchases(res.data.data);
+        } catch (error) {
+            console.error("Failed to fetch purchases:", error);
+        }
+        finally {
+            setLoading(false);
+        }
     };
 
     const handleProductSelect = (productId) => {
@@ -204,30 +213,37 @@ export default function PurchasesPage() {
             </div>
 
             {/* Purchase Table */}
-            <div className="overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Item Name</TableHead>
-                            <TableHead>Total Items</TableHead>
-                            <TableHead>Actual Cost</TableHead>
-                            <TableHead>Selling Cost</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {purchases.map((purchase) => (
-                            <TableRow key={purchase._id}>
-                                <TableCell>{new Date(purchase.dateOfPurchase).toLocaleDateString()}</TableCell>
-                                <TableCell>{purchase.productId?.name || "-"}</TableCell>
-                                <TableCell>{purchase.quantity}</TableCell>
-                                <TableCell>{purchase.productId?.cost}</TableCell>
-                                <TableCell>{purchase.costPerItem}</TableCell>
+            {loading ? (
+                <div className="flex justify-center items-center py-10">
+                    <div className="animate-spin h-6 w-6 border-4 border-t-transparent border-black rounded-full" />
+                    <span className="ml-2 text-muted-foreground text-sm">Loading Purchases...</span>
+                </div>
+            ) : (
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Item Name</TableHead>
+                                <TableHead>Total Items</TableHead>
+                                <TableHead>Actual Cost</TableHead>
+                                <TableHead>Selling Cost</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
+                        </TableHeader>
+                        <TableBody>
+                            {purchases.map((purchase) => (
+                                <TableRow key={purchase._id}>
+                                    <TableCell>{new Date(purchase.dateOfPurchase).toLocaleDateString()}</TableCell>
+                                    <TableCell>{purchase.productId?.name || "-"}</TableCell>
+                                    <TableCell>{purchase.quantity}</TableCell>
+                                    <TableCell>{purchase.productId?.cost}</TableCell>
+                                    <TableCell>{purchase.costPerItem}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
         </div>
     );
 }
