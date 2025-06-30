@@ -1,12 +1,20 @@
-"use client";
+'use client';
 
-import DashboardStats from "@/components/dashboard/DashboardStats";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  return (
-    <main className="p-6">
-      <DashboardStats />
-      {/* In future, maybe add charts here too */}
-    </main>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+
+    if (user) {
+      router.replace('/dashboard/purchases');
+    } else {
+      router.replace('/login');
+    }
+  }, [router]);
+
+  return null;
 }

@@ -29,7 +29,7 @@ export default function LoginPage() {
 
         if (data.success) {
             localStorage.setItem('user', JSON.stringify(data.user));
-            router.push('/dashboard/products');
+            router.push('/dashboard/purchases');
         } else {
             setMessage(data.message);
         }
