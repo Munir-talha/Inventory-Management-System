@@ -14,6 +14,7 @@ import {
     ChevronDown,
     ChevronRight,
     Folder,
+    LayoutDashboard
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -63,7 +64,10 @@ export default function Sidebar() {
     const SidebarContent = (
         <nav className="flex flex-col gap-2">
             {/* Purchases - Top Level */}
+            <NavItem href="/dashboard" label="Dashboard" icon={LayoutDashboard} />
+
             <NavItem href="/dashboard/purchases" label="Purchases" icon={Package} />
+
 
             {/* Products */}
             <div
@@ -127,7 +131,7 @@ export default function Sidebar() {
                 <aside className={clsx("flex flex-col transition-all duration-300 bg-white h-screen border-r", isCollapsed ? "w-20" : "w-64")}
                 >
                     <div className="flex items-center justify-between p-4 border-b">
-                        {!isCollapsed && <h2 className="text-lg font-bold">Menu</h2>}
+                        {!isCollapsed && <h2 className="text-lg font-bold">Inverntory System</h2>}
                         <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)}>
                             <Menu className="h-5 w-5" />
                         </Button>

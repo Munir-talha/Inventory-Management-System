@@ -18,7 +18,7 @@ export async function GET(req) {
         }
         const purchases = await Purchase.find(query)
             .populate('productId') // populate full product details
-        // .sort({ dateOfPurchase: -1 });
+            .sort({ dateOfPurchase: -1 });
 
         return NextResponse.json({ success: true, data: purchases });
     } catch (error) {

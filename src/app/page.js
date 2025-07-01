@@ -10,7 +10,7 @@ export default function Home() {
     const user = localStorage.getItem('user');
 
     if (user) {
-      router.replace('/dashboard/purchases');
+      router.replace('/dashboard');
     } else {
       router.replace('/login');
     }
