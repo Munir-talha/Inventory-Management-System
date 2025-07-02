@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Inventory Management System",
-  description: "Designed By Talha",
+  description: "Designed By Waqar Shfique",
 };
 
 export default function RootLayout({ children }) {

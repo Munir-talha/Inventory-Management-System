@@ -81,7 +81,7 @@ export default function Sidebar() {
                 >
                     <div className="flex items-center gap-2">
                         <Package className="w-4 h-4" />
-                        {!isCollapsed && <span>Items</span>}
+                        {!isCollapsed && <span>Inventory</span>}
                     </div>
                     {!isCollapsed && (openProducts ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
                 </div>
