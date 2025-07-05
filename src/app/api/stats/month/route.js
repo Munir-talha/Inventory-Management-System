@@ -1,7 +1,7 @@
 // app/api/stats/month/route.js
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/connectDB';
-import Purchase from '@/models/purchase';
+import Sale from '@/models/sale';
 
 export async function GET() {
     await connectDB();
@@ -14,12 +14,12 @@ export async function GET() {
     endOfMonth.setMonth(endOfMonth.getMonth() + 1);
     endOfMonth.setHours(0, 0, 0, 0);
 
-    const purchases = await Purchase.find({
-        dateOfPurchase: { $gte: startOfMonth, $lt: endOfMonth }
+    const sales = await Sale.find({
+        dateOfSale: { $gte: startOfMonth, $lt: endOfMonth }
     });
 
-    const totalSale = purchases.reduce((sum, p) => sum + (p.costPerItem * p.quantity), 0);
-    const totalItems = purchases.reduce((count, p) => count + p.quantity, 0);
+    const totalSale = sales.reduce((sum, sale) => sum + (sale.sellingPricePerItem * sale.quantity), 0);
+    const totalItems = sales.reduce((count, sale) => count + sale.quantity, 0);
 
     return NextResponse.json({ success: true, totalSale, totalItems });
 }

@@ -23,7 +23,7 @@ export default function Header() {
     // Route flags
     const isDashboard = pathname === "/dashboard";
     const isProducts = pathname === "/dashboard/products";
-    const isPurchases = pathname === "/dashboard/purchases";
+    const isSale = pathname === "/dashboard/sales";
 
     return (
         <header className="bg-white border-b p-4 flex justify-between items-center">
@@ -35,13 +35,13 @@ export default function Header() {
             </button>
 
             <div className="flex items-center gap-3">
-                {(isDashboard || isPurchases) && (
+                {(isDashboard || isSale) && (
                     <Button
                         onClick={() => setShowPurchaseModal(true)}
                         className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-4 py-2 text-sm shadow"
                     >
                         <Plus className="w-4 h-4 mr-2" />
-                        New Purchase
+                        New Sale
                     </Button>
                 )}
 

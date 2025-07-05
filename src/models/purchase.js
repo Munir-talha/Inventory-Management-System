@@ -14,6 +14,6 @@ const purchaseSchema = new mongoose.Schema(
         dateOfPurchase: { type: Date, required: true },
     },
     { timestamps: true }
-);
+); w
 
 export default mongoose.models.Purchase || mongoose.model("Purchase", purchaseSchema);

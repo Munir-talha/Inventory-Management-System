@@ -27,6 +27,7 @@ export default function Sidebar() {
     const [openCategories, setOpenCategories] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [openReports, setOpenReports] = useState(false);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -55,6 +56,13 @@ export default function Sidebar() {
         </div>
     );
 
+    const ReportsLinks = (
+        <div className="ml-6 mt-1 flex flex-col gap-1">
+            <NavItem href="/dashboard/daily-closing" label="Daily Closing" icon={List} />
+            <NavItem href="/dashboard/sales-report" label="Sales Report" icon={List} />
+        </div>
+    );
+
     const CategoryLinks = (
         <div className="ml-6 mt-1 flex flex-col gap-1">
             <NavItem href="/dashboard/categories" label="All Categories" icon={List} />
@@ -66,7 +74,7 @@ export default function Sidebar() {
             {/* Purchases - Top Level */}
             <NavItem href="/dashboard" label="Dashboard" icon={LayoutDashboard} />
 
-            <NavItem href="/dashboard/purchases" label="Purchases" icon={Package} />
+            <NavItem href="/dashboard/sales" label="Sales" icon={Package} />
 
 
             {/* Products */}
@@ -105,6 +113,25 @@ export default function Sidebar() {
                     {!isCollapsed && (openCategories ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
                 </div>
                 {openCategories && CategoryLinks}
+            </div>
+
+            {/* Reports */}
+            <div
+                onMouseEnter={() => !isMobile && setOpenReports(true)}
+                onMouseLeave={() => !isMobile && setOpenReports(false)}
+                className="group"
+            >
+                <div
+                    onClick={() => isMobile && setOpenReports(!openReports)}
+                    className="flex items-center justify-between text-sm font-semibold px-4 py-2 rounded-md hover:bg-gray-100 cursor-pointer"
+                >
+                    <div className="flex items-center gap-2">
+                        <Folder className="w-4 h-4" />
+                        {!isCollapsed && <span>Reports</span>}
+                    </div>
+                    {!isCollapsed && (openReports ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+                </div>
+                {openReports && ReportsLinks}
             </div>
         </nav>
     );

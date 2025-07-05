@@ -1,7 +1,7 @@
 // app/api/stats/today/route.js
-import { NextResponse } from 'next/server';
-import connectDB from '@/lib/connectDB';
-import Purchase from '@/models/purchase';
+import { NextResponse } from "next/server";
+import connectDB from "@/lib/connectDB";
+import Sale from "@/models/sale";
 
 export async function GET() {
     await connectDB();
@@ -11,12 +11,28 @@ export async function GET() {
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
-    const purchases = await Purchase.find({
-        dateOfPurchase: { $gte: today, $lt: tomorrow }
+    const sales = await Sale.find({
+        dateOfSale: { $gte: today, $lt: tomorrow },
     });
 
-    const totalSale = purchases.reduce((sum, p) => sum + (p.costPerItem * p.quantity), 0);
-    const totalItems = purchases.reduce((count, p) => count + p.quantity, 0);
+    const totalSale = sales.reduce(
+        (sum, sale) => sum + sale.sellingPricePerItem * sale.quantity,
+        0
+    );
 
-    return NextResponse.json({ success: true, totalSale, totalItems });
+    const totalCost = sales.reduce(
+        (sum, sale) => sum + sale.costPerItem * sale.quantity,
+        0
+    );
+
+    const totalProfit = totalSale - totalCost;
+
+    const totalItems = sales.reduce((sum, sale) => sum + sale.quantity, 0);
+
+    return NextResponse.json({
+        success: true,
+        totalSale,
+        totalProfit,
+        totalItems,
+    });
 }

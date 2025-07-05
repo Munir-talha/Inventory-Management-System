@@ -1,30 +1,44 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, PackageX, CalendarRange, CalendarDays } from "lucide-react";
+import {
+    DollarSign,
+    PackageX,
+    CalendarDays,
+    TrendingUp,
+} from "lucide-react";
 import axios from "axios";
 
 export default function DashboardStats() {
     const [loading, setLoading] = useState(true);
-    const [todayStats, setTodayStats] = useState({ totalSale: 0, totalItems: 0 });
-    const [weekStats, setWeekStats] = useState({ totalSale: 0, totalItems: 0 });
-    const [monthStats, setMonthStats] = useState({ totalSale: 0, totalItems: 0 });
+    const [todayStats, setTodayStats] = useState({
+        totalSale: 0,
+        totalProfit: 0,
+        totalItems: 0,
+    });
+    const [monthStats, setMonthStats] = useState({
+        totalSale: 0,
+        totalItems: 0,
+    });
     const [outOfStockCount, setOutOfStockCount] = useState(0);
 
     useEffect(() => {
         async function fetchStats() {
             try {
-                const [todayRes, weekRes, monthRes, outRes] = await Promise.all([
+                const [todayRes, monthRes, outRes] = await Promise.all([
                     axios.get("/api/stats/today"),
-                    axios.get("/api/stats/week"),
                     axios.get("/api/stats/month"),
                     axios.get("/api/products/out-of-stock"),
                 ]);
 
                 setTodayStats(todayRes.data);
-                setWeekStats(weekRes.data);
                 setMonthStats(monthRes.data);
                 setOutOfStockCount(outRes.data.count);
             } catch (error) {
@@ -56,7 +70,7 @@ export default function DashboardStats() {
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Today’s Sales */}
+            {/* ✅ Today’s Sales */}
             <Card className="shadow-md border border-gray-200">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-md font-medium text-muted-foreground">
@@ -74,25 +88,28 @@ export default function DashboardStats() {
                 </CardContent>
             </Card>
 
-            {/* This Week's Sales */}
+            {/* ✅ Today’s Profit */}
             <Card className="shadow-md border border-gray-200">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-md font-medium text-muted-foreground">
-                        This Week's Sale
+                        Today's Profit
                     </CardTitle>
-                    <CalendarRange className="w-5 h-5 text-blue-500" />
+                    <TrendingUp className="w-5 h-5 text-emerald-500" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-blue-700">
-                        {formatCurrency(weekStats.totalSale)}
+                    <div
+                        className={`text-2xl font-bold ${todayStats.totalProfit >= 0 ? "text-emerald-600" : "text-red-600"
+                            }`}
+                    >
+                        {formatCurrency(todayStats.totalProfit)}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        {weekStats.totalItems} items sold this week
+                        Net profit earned today
                     </p>
                 </CardContent>
             </Card>
 
-            {/* Monthly Sales */}
+            {/* ✅ Monthly Sales */}
             <Card className="shadow-md border border-gray-200">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-md font-medium text-muted-foreground">
@@ -110,7 +127,7 @@ export default function DashboardStats() {
                 </CardContent>
             </Card>
 
-            {/* Out of Stock */}
+            {/* ✅ Out of Stock */}
             <Card className="shadow-md border border-gray-200">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-md font-medium text-muted-foreground">
@@ -119,8 +136,12 @@ export default function DashboardStats() {
                     <PackageX className="w-5 h-5 text-red-500" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-red-600">{outOfStockCount}</div>
-                    <p className="text-xs text-muted-foreground">products need restocking</p>
+                    <div className="text-2xl font-bold text-red-600">
+                        {outOfStockCount}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        Products need restocking
+                    </p>
                 </CardContent>
             </Card>
         </div>

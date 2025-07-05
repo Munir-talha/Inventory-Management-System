@@ -2,13 +2,15 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/connectDB';
 import Product from '@/models/product';
-import '@/models/product_categories'; // ✅ This is the fix!
+import '@/models/product_categories';
 
 
 export async function GET() {
     try {
         await connectDB();
-        const products = await Product.find().populate('categoryId');
+        const products = await Product.find()
+            .sort({ createdAt: -1 })
+            .populate('categoryId');
         return NextResponse.json({ success: true, data: products });
     } catch (error) {
         console.error('Error fetching products:', error);
