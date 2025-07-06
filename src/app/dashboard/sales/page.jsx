@@ -295,7 +295,7 @@ export default function SalesPage() {
                                     <TableHead>Qty</TableHead>
                                     <TableHead>Cost</TableHead>
                                     <TableHead>Selling Price</TableHead>
-                                    <TableHead>Online</TableHead>
+                                    <TableHead>Online Payment</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
