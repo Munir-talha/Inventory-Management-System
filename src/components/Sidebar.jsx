@@ -4,6 +4,8 @@ import {
     Sheet,
     SheetContent,
     SheetTrigger,
+    SheetHeader,
+    SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -148,8 +150,16 @@ export default function Sidebar() {
                                 <Menu className="h-5 w-5" />
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="left" className="w-64 p-4">
-                            {SidebarContent}
+                        <SheetContent
+                            side="left"
+                            className="w-64 p-4 bg-white h-full z-50 shadow-lg"
+                        >
+                            <SheetHeader>
+                                <SheetTitle>Menu</SheetTitle>
+                            </SheetHeader>
+                            <div className="mt-4">
+                                {SidebarContent}
+                            </div>
                         </SheetContent>
                     </Sheet>
                 </div>
