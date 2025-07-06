@@ -41,6 +41,10 @@ export default function SalesPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
 
+    const [searchQuery, setSearchQuery] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
     useEffect(() => {
         axios.get("/api/products").then((res) => setProducts(res.data.data));
         fetchSales();
@@ -51,7 +55,6 @@ export default function SalesPage() {
             setLoading(true);
             const res = await axios.get("/api/sales");
             setSales(res.data.data);
-            console.log("all: ", res.data.data)
         } catch (error) {
             console.error("Failed to fetch sales:", error);
         } finally {
@@ -123,12 +126,18 @@ export default function SalesPage() {
     };
 
     const total = form.quantity * form.sellingPricePerItem;
-
     const disableSubmit =
         !selectedProduct ||
         !selectedProduct.isActive ||
         selectedProduct.availableStock <= 0 ||
         form.quantity > selectedProduct.availableStock;
+
+    const filteredSales = sales.filter((sale) =>
+        sale.productId?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedSales = filteredSales.slice(startIndex, endIndex);
 
     return (
         <div className="p-4">
@@ -255,37 +264,85 @@ export default function SalesPage() {
                 </Dialog>
             </div>
 
+            {/* Search + Table */}
             {loading ? (
                 <div className="flex justify-center items-center py-10">
                     <div className="animate-spin h-6 w-6 border-4 border-t-transparent border-black rounded-full" />
                     <span className="ml-2 text-muted-foreground text-sm">Loading Sales...</span>
                 </div>
             ) : (
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Item Name</TableHead>
-                                <TableHead>Qty</TableHead>
-                                <TableHead>Cost</TableHead>
-                                <TableHead>Selling Price</TableHead>
-                                <TableHead>Online</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {sales.map((sale) => (
-                                <TableRow key={sale._id}>
-                                    <TableCell>{new Date(sale.dateOfSale).toLocaleDateString()}</TableCell>
-                                    <TableCell>{sale.productId?.name || "-"}</TableCell>
-                                    <TableCell>{sale.quantity}</TableCell>
-                                    <TableCell>{sale.costPerItem}</TableCell>
-                                    <TableCell>{sale.sellingPricePerItem}</TableCell>
-                                    <TableCell>{sale.paymentMode !== 'cash' ? "✔️" : "❌"}</TableCell>
+                <div className="space-y-4">
+                    {/* Search Filter */}
+                    <div className="flex justify-between items-center">
+                        <Input
+                            placeholder="Search by product name..."
+                            className="max-w-sm"
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                        />
+                    </div>
+
+                    {/* Table */}
+                    <div className="overflow-auto rounded-lg border border-gray-200">
+                        <Table className="min-w-[800px]">
+                            <TableHeader className="sticky top-0 bg-white shadow z-10">
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Item Name</TableHead>
+                                    <TableHead>Qty</TableHead>
+                                    <TableHead>Cost</TableHead>
+                                    <TableHead>Selling Price</TableHead>
+                                    <TableHead>Online</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedSales.map((sale) => (
+                                    <TableRow key={sale._id} className="hover:bg-gray-50">
+                                        <TableCell>{new Date(sale.dateOfSale).toLocaleDateString()}</TableCell>
+                                        <TableCell>{sale.productId?.name || "-"}</TableCell>
+                                        <TableCell>{sale.quantity}</TableCell>
+                                        <TableCell>Rs. {sale.costPerItem}</TableCell>
+                                        <TableCell>Rs. {sale.sellingPricePerItem}</TableCell>
+                                        <TableCell>
+                                            {sale.paymentMode !== "cash" ? (
+                                                <span className="text-green-600 font-bold">✔</span>
+                                            ) : (
+                                                <span className="text-red-500 font-bold">✘</span>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    {/* Pagination */}
+                    <div className="flex justify-between items-center pt-4">
+                        <p className="text-sm text-muted-foreground">
+                            Showing {startIndex + 1}-{Math.min(endIndex, filteredSales.length)} of {filteredSales.length}
+                        </p>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage((p) => p - 1)}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={endIndex >= filteredSales.length}
+                                onClick={() => setCurrentPage((p) => p + 1)}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
