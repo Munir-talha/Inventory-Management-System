@@ -32,7 +32,7 @@ export default function SalesPage() {
         quantity: 1,
         sellingPricePerItem: 0,
         dateOfSale: new Date().toISOString().split("T")[0],
-        isOnlinePayment: false,
+        // isOnlinePayment: false,
         costPerItem: 0,
         paymentMode: "cash",
         total: 0
@@ -101,7 +101,7 @@ export default function SalesPage() {
 
         const submissionForm = {
             ...form,
-            paymentMode: form.isOnlinePayment ? "easypaisa" : "cash",
+            // paymentMode: form.isOnlinePayment ? "easypaisa" : "cash",
             total: updatedTotal
         };
 
@@ -113,7 +113,7 @@ export default function SalesPage() {
                 quantity: 1,
                 sellingPricePerItem: 0,
                 dateOfSale: new Date().toISOString().split("T")[0],
-                isOnlinePayment: false,
+                // isOnlinePayment: false,
                 costPerItem: 0,
                 paymentMode: "cash",
                 total: 0
@@ -230,14 +230,14 @@ export default function SalesPage() {
                                 <p className="font-semibold">Total: Rs. {total}</p>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            {/* <div className="flex items-center gap-2">
                                 <Checkbox
                                     id="easypaisa"
                                     checked={form.isOnlinePayment}
                                     onCheckedChange={(checked) => setForm({ ...form, isOnlinePayment: checked })}
                                 />
                                 <Label htmlFor="easypaisa">Paid via Easypaisa</Label>
-                            </div>
+                            </div> */}
 
                             {error && <p className="text-red-500 text-sm">{error}</p>}
 
@@ -295,7 +295,7 @@ export default function SalesPage() {
                                     <TableHead>Qty</TableHead>
                                     <TableHead>Cost</TableHead>
                                     <TableHead>Selling Price</TableHead>
-                                    <TableHead>Online Payment</TableHead>
+                                    {/* <TableHead>Online Payment</TableHead> */}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -306,13 +306,13 @@ export default function SalesPage() {
                                         <TableCell>{sale.quantity}</TableCell>
                                         <TableCell>Rs. {sale.costPerItem}</TableCell>
                                         <TableCell>Rs. {sale.sellingPricePerItem}</TableCell>
-                                        <TableCell>
+                                        {/* <TableCell>
                                             {sale.paymentMode !== "cash" ? (
                                                 <span className="text-green-600 font-bold">✔</span>
                                             ) : (
                                                 <span className="text-red-500 font-bold">✘</span>
                                             )}
-                                        </TableCell>
+                                        </TableCell> */}
                                     </TableRow>
                                 ))}
                             </TableBody>

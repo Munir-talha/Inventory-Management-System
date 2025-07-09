@@ -157,9 +157,149 @@ export default function ProductsPage() {
                             </DialogTitle>
                         </DialogHeader>
 
-                        {/* FORM CONTENT (unchanged) */}
-                        {/* Keep same form code as you've already pasted — it's complete and working. */}
-                        {/* You can copy that back here as-is. */}
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm text-gray-700">Product Name</Label>
+                                    <Input
+                                        value={form.name}
+                                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                        placeholder="Enter product name"
+                                        required
+                                        className="bg-white text-black"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-sm text-gray-700">Category</Label>
+                                    <select
+                                        value={form.categoryId}
+                                        onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                                        required
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-black"
+                                    >
+                                        <option value="" disabled>
+                                            Select category
+                                        </option>
+                                        {categories.map((cat) => (
+                                            <option key={cat._id} value={cat._id}>
+                                                {cat.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm text-gray-700">Cost (Buying)</Label>
+                                    <Input
+                                        type="number"
+                                        value={form.cost}
+                                        onChange={(e) => setForm({ ...form, cost: e.target.value })}
+                                        placeholder="Enter cost"
+                                        required
+                                        className="bg-white text-black"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-sm text-gray-700">Selling Price</Label>
+                                    <Input
+                                        type="number"
+                                        value={form.sellingPrice}
+                                        onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
+                                        placeholder="Enter selling price"
+                                        required
+                                        className="bg-white text-black"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm text-gray-700">Available Stock</Label>
+                                    <Input
+                                        type="number"
+                                        value={form.availableStock}
+                                        onChange={(e) => setForm({ ...form, availableStock: e.target.value })}
+                                        placeholder="Enter stock"
+                                        className="bg-white text-black"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-sm text-gray-700">Min Stock Level</Label>
+                                    <Input
+                                        type="number"
+                                        value={form.minStockLevel}
+                                        onChange={(e) => setForm({ ...form, minStockLevel: e.target.value })}
+                                        placeholder="Minimum threshold"
+                                        className="bg-white text-black"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm text-gray-700">Is Active</Label>
+                                    <select
+                                        value={form.isActive}
+                                        onChange={(e) => setForm({ ...form, isActive: e.target.value === "true" })}
+                                        className="w-full border px-3 py-2 bg-white text-black rounded-md"
+                                    >
+                                        <option value="true">Yes</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-center mt-6 space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        id="initialPurchase"
+                                        checked={form.initialPurchase}
+                                        onChange={(e) =>
+                                            setForm({ ...form, initialPurchase: e.target.checked })
+                                        }
+                                        className="w-4 h-4 accent-blue-600"
+                                    />
+                                    <Label htmlFor="initialPurchase" className="text-sm text-gray-700">
+                                        Add Initial Purchase?
+                                    </Label>
+                                </div>
+                            </div>
+
+                            {form.initialPurchase && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-dashed p-4 rounded-lg">
+                                    <div>
+                                        <Label className="text-sm text-gray-700">Initial Purchase Qty</Label>
+                                        <Input
+                                            type="number"
+                                            value={form.initialPurchaseQty}
+                                            onChange={(e) =>
+                                                setForm({ ...form, initialPurchaseQty: e.target.value })
+                                            }
+                                            placeholder="Quantity"
+                                            className="bg-white text-black"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-sm text-gray-700">Initial Purchase Date</Label>
+                                        <Input
+                                            type="date"
+                                            value={form.initialPurchaseDate}
+                                            onChange={(e) =>
+                                                setForm({ ...form, initialPurchaseDate: e.target.value })
+                                            }
+                                            className="bg-white text-black"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <Button
+                                type="submit"
+                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700"
+                            >
+                                {editingProduct ? "Update Product" : "Add Product"}
+                            </Button>
+                        </form>
                     </DialogContent>
                 </Dialog>
             </div>

@@ -198,7 +198,7 @@ export default function AddSaleModal({ open, onOpenChange, onSaved }) {
                     </div>
 
                     {/* Easypaisa */}
-                    <div className="flex items-center gap-2">
+                    {/* <div className="flex items-center gap-2">
                         <Checkbox
                             id="easypaisa"
                             checked={form.paymentMode === "easypaisa"}
@@ -210,7 +210,7 @@ export default function AddSaleModal({ open, onOpenChange, onSaved }) {
                             }
                         />
                         <Label htmlFor="easypaisa">Paid via Easypaisa</Label>
-                    </div>
+                    </div> */}
 
                     {/* Errors */}
                     {error && <p className="text-red-500 text-sm">{error}</p>}

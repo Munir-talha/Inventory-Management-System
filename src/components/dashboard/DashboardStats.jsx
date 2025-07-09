@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import {
     Card,
@@ -71,43 +71,47 @@ export default function DashboardStats() {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {/* ✅ Today’s Sales */}
-            <Card className="shadow-md border border-gray-200">
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-md font-medium text-muted-foreground">
-                        Today's Sale
-                    </CardTitle>
-                    <DollarSign className="w-5 h-5 text-green-500" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-green-700">
-                        {formatCurrency(todayStats.totalSale)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                        {todayStats.totalItems} items sold today
-                    </p>
-                </CardContent>
-            </Card>
+            <Link href="/dashboard/daily-closing" className="block">
+                <Card className="shadow-md border border-gray-200">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                        <CardTitle className="text-md font-medium text-muted-foreground">
+                            Today's Sale
+                        </CardTitle>
+                        <DollarSign className="w-5 h-5 text-green-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-green-700">
+                            {formatCurrency(todayStats.totalSale)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {todayStats.totalItems} items sold today
+                        </p>
+                    </CardContent>
+                </Card>
+            </Link>
 
             {/* ✅ Today’s Profit */}
-            <Card className="shadow-md border border-gray-200">
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-md font-medium text-muted-foreground">
-                        Today's Profit
-                    </CardTitle>
-                    <TrendingUp className="w-5 h-5 text-emerald-500" />
-                </CardHeader>
-                <CardContent>
-                    <div
-                        className={`text-2xl font-bold ${todayStats.totalProfit >= 0 ? "text-emerald-600" : "text-red-600"
-                            }`}
-                    >
-                        {formatCurrency(todayStats.totalProfit)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                        Net profit earned today
-                    </p>
-                </CardContent>
-            </Card>
+            <Link href="/dashboard/daily-closing" className="block">
+                <Card className="shadow-md border border-gray-200">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                        <CardTitle className="text-md font-medium text-muted-foreground">
+                            Today's Profit
+                        </CardTitle>
+                        <TrendingUp className="w-5 h-5 text-emerald-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div
+                            className={`text-2xl font-bold ${todayStats.totalProfit >= 0 ? "text-emerald-600" : "text-red-600"
+                                }`}
+                        >
+                            {formatCurrency(todayStats.totalProfit)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Net profit earned today
+                        </p>
+                    </CardContent>
+                </Card>
+            </Link>
 
             {/* ✅ Monthly Sales */}
             <Card className="shadow-md border border-gray-200">
@@ -144,6 +148,6 @@ export default function DashboardStats() {
                     </p>
                 </CardContent>
             </Card>
-        </div>
+        </div >
     );
 }

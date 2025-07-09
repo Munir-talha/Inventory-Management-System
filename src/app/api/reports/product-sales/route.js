@@ -7,21 +7,27 @@ export async function GET(req) {
         await connectDB();
         const url = new URL(req.url);
         const dateParam = url.searchParams.get("date");
+        const startParam = url.searchParams.get("start");
+        const endParam = url.searchParams.get("end");
 
-        if (!dateParam) {
-            return NextResponse.json({ success: false, message: "Missing date" }, { status: 400 });
+        let filter = {};
+
+        if (dateParam) {
+            const start = new Date(dateParam);
+            const end = new Date(dateParam);
+            end.setDate(end.getDate() + 1);
+            filter.dateOfSale = { $gte: start, $lt: end };
+        } else if (startParam && endParam) {
+            const start = new Date(startParam);
+            const end = new Date(endParam);
+            end.setDate(end.getDate() + 1);
+            filter.dateOfSale = { $gte: start, $lt: end };
+        } else {
+            return NextResponse.json({ success: false, message: "Missing date or range" }, { status: 400 });
         }
 
-        const start = new Date(dateParam);
-        const end = new Date(dateParam);
-        end.setDate(end.getDate() + 1);
-
         const summary = await Sale.aggregate([
-            {
-                $match: {
-                    dateOfSale: { $gte: start, $lt: end }
-                }
-            },
+            { $match: filter },
             {
                 $group: {
                     _id: "$productId",
@@ -62,3 +68,4 @@ export async function GET(req) {
         return NextResponse.json({ success: false, message: "Internal Server Error" }, { status: 500 });
     }
 }
+

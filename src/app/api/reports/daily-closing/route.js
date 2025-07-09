@@ -25,7 +25,6 @@ export async function GET(req) {
             {
                 $project: {
                     total: 1,
-                    paymentMode: 1,
                     profit: {
                         $subtract: ["$total", { $multiply: ["$costPerItem", "$quantity"] }]
                     }
@@ -35,17 +34,7 @@ export async function GET(req) {
                 $group: {
                     _id: null,
                     totalSales: { $sum: "$total" },
-                    totalProfit: { $sum: "$profit" },
-                    cashAmount: {
-                        $sum: {
-                            $cond: [{ $eq: ["$paymentMode", "cash"] }, "$total", 0]
-                        }
-                    },
-                    easypaisaAmount: {
-                        $sum: {
-                            $cond: [{ $eq: ["$paymentMode", "easypaisa"] }, "$total", 0]
-                        }
-                    }
+                    totalProfit: { $sum: "$profit" }
                 }
             },
             {
@@ -53,8 +42,6 @@ export async function GET(req) {
                     _id: 0,
                     totalSales: 1,
                     totalProfit: 1,
-                    cashAmount: 1,
-                    easypaisaAmount: 1,
                     amountAfterProfit: { $subtract: ["$totalSales", "$totalProfit"] }
                 }
             }
@@ -65,8 +52,6 @@ export async function GET(req) {
             data: sales.length > 0 ? sales[0] : {
                 totalSales: 0,
                 totalProfit: 0,
-                cashAmount: 0,
-                easypaisaAmount: 0,
                 amountAfterProfit: 0
             }
         });

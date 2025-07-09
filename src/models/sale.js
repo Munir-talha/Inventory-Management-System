@@ -12,7 +12,7 @@ const saleSchema = new mongoose.Schema(
         costPerItem: { type: Number, required: true },
         sellingPricePerItem: { type: Number, required: true },
         total: { type: Number, required: true },
-        paymentMode: { type: String, enum: ["cash", "easypaisa", "bank", "other"], default: "cash" },
+        // paymentMode: { type: String, enum: ["cash", "easypaisa", "bank", "other"], default: "cash" },
         dateOfSale: { type: Date, required: true },
     },
     { timestamps: true }

@@ -22,14 +22,24 @@ export default function ProductSalesReportPage() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const today = new Date().toISOString().split("T")[0];
+
     useEffect(() => {
-        fetchData(filterDate);
+        fetchData({ date: filterDate });
     }, []);
 
-    const fetchData = async (dateString) => {
+    const fetchData = async (params) => {
         setLoading(true);
         try {
-            const res = await axios.get(`/api/reports/product-sales?date=${dateString}`);
+            let query = "";
+
+            if (params.date) {
+                query = `?date=${params.date}`;
+            } else if (params.start && params.end) {
+                query = `?start=${params.start}&end=${params.end}`;
+            }
+
+            const res = await axios.get(`/api/reports/product-sales${query}`);
             setData(res.data.data);
         } catch (error) {
             console.error("Failed to fetch product sales report:", error);
@@ -38,24 +48,37 @@ export default function ProductSalesReportPage() {
         }
     };
 
+    const handleMonthFilter = (months) => {
+        const end = new Date();
+        const start = new Date();
+        start.setMonth(start.getMonth() - months);
+
+        const startStr = start.toISOString().split("T")[0];
+        const endStr = end.toISOString().split("T")[0];
+
+        setFilterDate(""); // Clear manual date input
+        fetchData({ start: startStr, end: endStr });
+    };
+
     return (
         <div className="p-6 space-y-6">
-            <div className="flex justify-between items-center flex-wrap gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
                 <h1 className="text-2xl font-bold">📊 Product-wise Sales Summary</h1>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap gap-2">
                     <Input
                         type="date"
                         value={filterDate}
                         onChange={(e) => setFilterDate(e.target.value)}
-                        className="w-[200px]"
+                        className="w-[160px]"
+                        max={today} // ✅ disables future dates
                     />
-                    <Button onClick={() => fetchData(filterDate)}>Search</Button>
+                    <Button onClick={() => fetchData({ date: filterDate })}>Search</Button>
                     <Button
                         variant="ghost"
                         onClick={() => {
                             const today = new Date().toISOString().split("T")[0];
                             setFilterDate(today);
-                            fetchData(today);
+                            fetchData({ date: today });
                         }}
                     >
                         Reset
@@ -63,17 +86,29 @@ export default function ProductSalesReportPage() {
                 </div>
             </div>
 
+            <div className="flex flex-wrap gap-2">
+                {[1, 2, 3, 4, 5, 6].map((month) => (
+                    <Button
+                        key={month}
+                        variant="outline"
+                        onClick={() => handleMonthFilter(month)}
+                    >
+                        Last {month} Month{month > 1 ? "s" : ""}
+                    </Button>
+                ))}
+            </div>
+
             <Card className="shadow-lg">
                 <CardHeader>
                     <CardTitle className="text-lg font-semibold">
-                        Summary for {format(new Date(filterDate), "PPP")}
+                        Summary Report
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="overflow-x-auto">
                     {loading ? (
                         <p className="text-muted-foreground">Loading...</p>
                     ) : data.length === 0 ? (
-                        <p className="text-muted-foreground">No sales found for this day.</p>
+                        <p className="text-muted-foreground">No sales found.</p>
                     ) : (
                         <Table>
                             <TableHeader>
@@ -97,7 +132,25 @@ export default function ProductSalesReportPage() {
                                         </TableCell>
                                     </TableRow>
                                 ))}
+
+                                {/* ➕ Total Row */}
+                                <TableRow className="bg-gray-100 font-semibold">
+                                    <TableCell className="text-right">Total</TableCell>
+                                    <TableCell>
+                                        {data.reduce((sum, item) => sum + item.totalQty, 0)}
+                                    </TableCell>
+                                    <TableCell>
+                                        Rs. {data.reduce((sum, item) => sum + item.totalRevenue, 0)}
+                                    </TableCell>
+                                    <TableCell>
+                                        Rs. {data.reduce((sum, item) => sum + item.totalCost, 0)}
+                                    </TableCell>
+                                    <TableCell className="text-green-700">
+                                        Rs. {data.reduce((sum, item) => sum + item.totalProfit, 0)}
+                                    </TableCell>
+                                </TableRow>
                             </TableBody>
+
                         </Table>
                     )}
                 </CardContent>

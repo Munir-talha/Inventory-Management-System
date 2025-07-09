@@ -21,6 +21,7 @@ export default function DailyClosingSummaryPage() {
         setLoading(true);
         try {
             const res = await axios.get(`/api/reports/daily-closing?date=${dateString}`);
+            console.log(res.data.data)
             setSummary(res.data.data);
         } catch (err) {
             console.error("Failed to fetch daily closing summary:", err);
@@ -92,7 +93,7 @@ export default function DailyClosingSummaryPage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    {/* <Card>
                         <CardHeader>
                             <CardTitle>🟢 Easypaisa Received</CardTitle>
                             <p className="text-sm text-muted-foreground">Paid by customers via Easypaisa</p>
@@ -100,9 +101,9 @@ export default function DailyClosingSummaryPage() {
                         <CardContent>
                             <p className="text-xl font-bold text-green-600">Rs. {summary.easypaisaAmount}</p>
                         </CardContent>
-                    </Card>
+                    </Card> */}
 
-                    <Card>
+                    {/* <Card>
                         <CardHeader>
                             <CardTitle>🟠 Cash Received</CardTitle>
                             <p className="text-sm text-muted-foreground">Paid by customers in cash</p>
@@ -110,7 +111,7 @@ export default function DailyClosingSummaryPage() {
                         <CardContent>
                             <p className="text-xl font-bold text-orange-600">Rs. {summary.cashAmount}</p>
                         </CardContent>
-                    </Card>
+                    </Card> */}
                 </div>
             )}
         </div>
