@@ -16,7 +16,8 @@ import {
     ChevronDown,
     ChevronRight,
     Folder,
-    LayoutDashboard
+    LayoutDashboard,
+    ArrowLeftRight
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -73,11 +74,8 @@ export default function Sidebar() {
 
     const SidebarContent = (
         <nav className="flex flex-col gap-2">
-            {/* Purchases - Top Level */}
             <NavItem href="/dashboard" label="Dashboard" icon={LayoutDashboard} />
-
             <NavItem href="/dashboard/sales" label="Sales" icon={Package} />
-
 
             {/* Products */}
             <div
@@ -117,7 +115,7 @@ export default function Sidebar() {
                 {openCategories && CategoryLinks}
             </div>
 
-            {/* Reports */}
+            {/* Reports Dropdown */}
             <div
                 onMouseEnter={() => !isMobile && setOpenReports(true)}
                 onMouseLeave={() => !isMobile && setOpenReports(false)}
@@ -135,8 +133,12 @@ export default function Sidebar() {
                 </div>
                 {openReports && ReportsLinks}
             </div>
+
+            {/* ✅ New Separate Menu Item */}
+            <NavItem href="/dashboard/transfer" label="Daily Transfer" icon={ArrowLeftRight} />
         </nav>
     );
+
 
 
     return (

@@ -11,6 +11,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+} from "@/components/ui/command";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 import axios from "axios";
 
 export default function AddSaleModal({ open, onOpenChange, onSaved }) {
@@ -25,6 +39,10 @@ export default function AddSaleModal({ open, onOpenChange, onSaved }) {
         paymentMode: "cash",
         costPerItem: 0
     });
+
+    // Combobox states
+    const [productOpen, setProductOpen] = useState(false);
+    const [searchValue, setSearchValue] = useState("");
 
     useEffect(() => {
         if (open) {
@@ -86,6 +104,7 @@ export default function AddSaleModal({ open, onOpenChange, onSaved }) {
         });
         setSelectedProduct(null);
         setError("");
+        setSearchValue("");
     };
 
     const isOutOfStock =
@@ -95,6 +114,11 @@ export default function AddSaleModal({ open, onOpenChange, onSaved }) {
         selectedProduct && form.quantity > selectedProduct.availableStock;
 
     const total = form.quantity * form.sellingPricePerItem;
+
+    // Filter products based on search
+    const filteredProducts = products.filter(product =>
+        product.name.toLowerCase().includes(searchValue.toLowerCase())
+    );
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,21 +130,55 @@ export default function AddSaleModal({ open, onOpenChange, onSaved }) {
                     {/* Product Select */}
                     <div className="space-y-1">
                         <Label>Select Product</Label>
-                        <select
-                            className="w-full border p-2 rounded text-black"
-                            value={form.productId}
-                            onChange={(e) => handleProductSelect(e.target.value)}
-                            required
-                        >
-                            <option value="" disabled>
-                                Select a product
-                            </option>
-                            {products.map((product) => (
-                                <option key={product._id} value={product._id}>
-                                    {product.name} {product.isActive ? "" : "(Inactive)"}
-                                </option>
-                            ))}
-                        </select>
+                        <Popover open={productOpen} onOpenChange={setProductOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={productOpen}
+                                    className="w-full justify-between text-black bg-white hover:bg-gray-50"
+                                >
+                                    {form.productId
+                                        ? products.find((product) => product._id === form.productId)?.name
+                                        : "Select a product..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white border border-gray-200 shadow-lg">
+                                <Command className="bg-white">
+                                    <CommandInput
+                                        placeholder="Search products..."
+                                        value={searchValue}
+                                        onInput={(e) => setSearchValue(e.currentTarget.value)}
+                                        className="border-b border-gray-200 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                    />
+                                    <CommandEmpty className="py-6 text-center text-sm text-gray-500">
+                                        No product found.
+                                    </CommandEmpty>
+                                    <CommandGroup className="max-h-60 overflow-auto bg-white">
+                                        {filteredProducts.map((product) => (
+                                            <CommandItem
+                                                key={product._id}
+                                                onSelect={() => {
+                                                    handleProductSelect(product._id);
+                                                    setProductOpen(false);
+                                                    setSearchValue("");
+                                                }}
+                                                className="cursor-pointer hover:bg-gray-50 px-3 py-2 bg-white text-black"
+                                            >
+                                                <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        form.productId === product._id ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                />
+                                                {product.name} {product.isActive ? "" : "(Inactive)"}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
 
                     {selectedProduct && (
