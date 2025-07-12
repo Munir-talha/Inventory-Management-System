@@ -14,7 +14,7 @@ import axios from "axios";
 
 export default function TransferPage() {
     const [date, setDate] = useState(() =>
-        new Date().toISOString().split("T")[0]
+        new Date().toISOString().slice(0, 10) // "YYYY-MM-DD"
     );
     const [summary, setSummary] = useState(null);
     const [transfers, setTransfers] = useState({
@@ -45,7 +45,6 @@ export default function TransferPage() {
                 easypaisa: 0,
                 bank: 0,
             };
-
             const noteText = transferRes.data.data?.note || "";
 
             const totalTransferred =
@@ -95,13 +94,10 @@ export default function TransferPage() {
                 note,
             });
             fetchSummary(date);
-
         } catch (err) {
             console.error("Error saving transfer", err);
-
         }
     };
-
 
     return (
         <div className="p-6 space-y-6">

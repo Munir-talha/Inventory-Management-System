@@ -15,10 +15,7 @@ export async function POST(req) {
             );
         }
 
-        const formattedDate = new Date(date);
-        formattedDate.setHours(0, 0, 0, 0);
-
-        const existing = await DailyTransfer.findOne({ date: formattedDate });
+        const existing = await DailyTransfer.findOne({ date });
 
         if (existing) {
             existing.transfers = transfers;
@@ -26,7 +23,7 @@ export async function POST(req) {
             await existing.save();
         } else {
             await DailyTransfer.create({
-                date: formattedDate,
+                date,
                 transfers,
                 note,
             });
@@ -46,19 +43,16 @@ export async function GET(req) {
     try {
         await connectDB();
         const url = new URL(req.url);
-        const dateParam = url.searchParams.get("date");
+        const date = url.searchParams.get("date");
 
-        if (!dateParam) {
+        if (!date) {
             return NextResponse.json(
                 { success: false, message: "Missing date" },
                 { status: 400 }
             );
         }
 
-        const formattedDate = new Date(dateParam);
-        formattedDate.setHours(0, 0, 0, 0);
-
-        const transfer = await DailyTransfer.findOne({ date: formattedDate });
+        const transfer = await DailyTransfer.findOne({ date });
 
         return NextResponse.json({ success: true, data: transfer || null });
     } catch (error) {
