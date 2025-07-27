@@ -16,6 +16,7 @@ export async function GET(req) {
         const end = new Date(dateParam);
         end.setDate(end.getDate() + 1);
 
+        // Fetch sales for that day
         const sales = await Sale.aggregate([
             {
                 $match: {
@@ -24,8 +25,9 @@ export async function GET(req) {
             },
             {
                 $project: {
-                    total: 1,
-                    profit: {
+                    totalSaleAmount: "$total",
+                    totalCost: { $multiply: ["$costPerItem", "$quantity"] },
+                    totalProfit: {
                         $subtract: ["$total", { $multiply: ["$costPerItem", "$quantity"] }]
                     }
                 }
@@ -33,28 +35,32 @@ export async function GET(req) {
             {
                 $group: {
                     _id: null,
-                    totalSales: { $sum: "$total" },
-                    totalProfit: { $sum: "$profit" }
+                    totalSales: { $sum: "$totalSaleAmount" },
+                    totalCost: { $sum: "$totalCost" },
+                    totalProfit: { $sum: "$totalProfit" }
                 }
             },
             {
                 $project: {
                     _id: 0,
                     totalSales: 1,
-                    totalProfit: 1,
-                    amountAfterProfit: { $subtract: ["$totalSales", "$totalProfit"] }
+                    totalCost: 1,
+                    totalProfit: 1
                 }
             }
         ]);
 
+        const summary = sales.length > 0 ? sales[0] : {
+            totalSales: 0,
+            totalCost: 0,
+            totalProfit: 0
+        };
+
         return NextResponse.json({
             success: true,
-            data: sales.length > 0 ? sales[0] : {
-                totalSales: 0,
-                totalProfit: 0,
-                amountAfterProfit: 0
-            }
+            data: summary
         });
+
     } catch (error) {
         console.error("Daily closing error:", error.message);
         return NextResponse.json({ success: false, message: "Internal Server Error" }, { status: 500 });

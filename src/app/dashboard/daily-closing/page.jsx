@@ -89,9 +89,10 @@ export default function DailyClosingSummaryPage() {
                             <p className="text-sm text-muted-foreground">What you spent to sell these items</p>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-xl font-bold text-gray-800">Rs. {summary.amountAfterProfit}</p>
+                            <p className="text-xl font-bold text-gray-800">Rs. {summary.totalCost}</p>
                         </CardContent>
                     </Card>
+
 
                     {/* <Card>
                         <CardHeader>

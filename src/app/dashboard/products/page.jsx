@@ -29,6 +29,10 @@ export default function ProductsPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+    const [selectedProductForHistory, setSelectedProductForHistory] = useState(null);
+    const [editingPurchase, setEditingPurchase] = useState(null);
+
     const itemsPerPage = 10;
 
     const [form, setForm] = useState({
@@ -39,9 +43,8 @@ export default function ProductsPage() {
         availableStock: 0,
         minStockLevel: 0,
         isActive: true,
-        initialPurchase: false,
-        initialPurchaseQty: 0,
-        initialPurchaseDate: "",
+        purchaseQty: 0,
+        purchaseDate: "",
     });
 
     const resetForm = () => {
@@ -53,9 +56,8 @@ export default function ProductsPage() {
             availableStock: 0,
             minStockLevel: 0,
             isActive: true,
-            initialPurchase: false,
-            initialPurchaseQty: 0,
-            initialPurchaseDate: "",
+            purchaseQty: 0,
+            purchaseDate: "",
         });
     };
 
@@ -85,10 +87,8 @@ export default function ProductsPage() {
             availableStock: Number(form.availableStock),
             minStockLevel: Number(form.minStockLevel),
             isActive: form.isActive === true || form.isActive === "true",
-            initialPurchaseQty: form.initialPurchase ? Number(form.initialPurchaseQty) : 0,
-            initialPurchaseDate: form.initialPurchase
-                ? new Date(form.initialPurchaseDate)
-                : null,
+            purchaseQty: Number(form.purchaseQty),
+            purchaseDate: form.purchaseDate ? new Date(form.purchaseDate) : null,
         };
 
         if (editingProduct) {
@@ -113,13 +113,31 @@ export default function ProductsPage() {
             availableStock: product.availableStock ?? 0,
             minStockLevel: product.minStockLevel ?? 0,
             isActive: product.isActive ?? true,
-            initialPurchase: !!product.initialPurchaseQty,
-            initialPurchaseQty: product.initialPurchaseQty ?? 0,
-            initialPurchaseDate: product.initialPurchaseDate
-                ? new Date(product.initialPurchaseDate).toISOString().split("T")[0]
-                : "",
+            purchaseQty: 0,
+            purchaseDate: "",
         });
         setOpen(true);
+    };
+
+    // const handleViewPurchaseHistory = (product) => {
+    //     console.log(product)
+    //     setSelectedProductForHistory(product);
+    //     setPurchaseModalOpen(true);
+    // };
+
+    const handleEditPurchase = (purchase) => {
+        setEditingPurchase(purchase);
+    };
+
+    const handleUpdatePurchase = async (e) => {
+        e.preventDefault();
+        await axios.put(`/api/products/${selectedProductForHistory._id}/purchase/${editingPurchase._id}`, {
+            quantity: editingPurchase.quantity,
+            date: new Date(editingPurchase.date),
+            cost: editingPurchase.cost,
+        });
+        fetchProducts();
+        setEditingPurchase(null);
     };
 
     useEffect(() => {
@@ -158,6 +176,17 @@ export default function ProductsPage() {
                         </DialogHeader>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <Label className="text-sm text-gray-700">Purchase Date</Label>
+                                <Input
+                                    type="date"
+                                    value={form.purchaseDate}
+                                    onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })}
+                                    required
+                                    className="bg-white text-black"
+                                />
+                            </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <Label className="text-sm text-gray-700">Product Name</Label>
@@ -249,49 +278,18 @@ export default function ProductsPage() {
                                         <option value="false">No</option>
                                     </select>
                                 </div>
-                                <div className="flex items-center mt-6 space-x-2">
-                                    <input
-                                        type="checkbox"
-                                        id="initialPurchase"
-                                        checked={form.initialPurchase}
-                                        onChange={(e) =>
-                                            setForm({ ...form, initialPurchase: e.target.checked })
-                                        }
-                                        className="w-4 h-4 accent-blue-600"
+                                <div>
+                                    <Label className="text-sm text-gray-700">Purchase Quantity</Label>
+                                    <Input
+                                        type="number"
+                                        value={form.purchaseQty}
+                                        onChange={(e) => setForm({ ...form, purchaseQty: e.target.value })}
+                                        placeholder="Enter quantity"
+                                        required
+                                        className="bg-white text-black"
                                     />
-                                    <Label htmlFor="initialPurchase" className="text-sm text-gray-700">
-                                        Add Initial Purchase?
-                                    </Label>
                                 </div>
                             </div>
-
-                            {form.initialPurchase && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-dashed p-4 rounded-lg">
-                                    <div>
-                                        <Label className="text-sm text-gray-700">Initial Purchase Qty</Label>
-                                        <Input
-                                            type="number"
-                                            value={form.initialPurchaseQty}
-                                            onChange={(e) =>
-                                                setForm({ ...form, initialPurchaseQty: e.target.value })
-                                            }
-                                            placeholder="Quantity"
-                                            className="bg-white text-black"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className="text-sm text-gray-700">Initial Purchase Date</Label>
-                                        <Input
-                                            type="date"
-                                            value={form.initialPurchaseDate}
-                                            onChange={(e) =>
-                                                setForm({ ...form, initialPurchaseDate: e.target.value })
-                                            }
-                                            className="bg-white text-black"
-                                        />
-                                    </div>
-                                </div>
-                            )}
 
                             <Button
                                 type="submit"
@@ -304,7 +302,6 @@ export default function ProductsPage() {
                 </Dialog>
             </div>
 
-            {/* Search and Table */}
             {loading ? (
                 <div className="flex justify-center py-10">
                     <div className="animate-spin h-6 w-6 border-4 border-t-transparent border-black rounded-full" />
@@ -333,7 +330,7 @@ export default function ProductsPage() {
                                     <TableHead>Stock</TableHead>
                                     <TableHead>Min Stock</TableHead>
                                     <TableHead>Active</TableHead>
-                                    <TableHead>Action</TableHead>
+                                    <TableHead>Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -345,10 +342,8 @@ export default function ProductsPage() {
                                         <TableCell>{product.sellingPrice}</TableCell>
                                         <TableCell>{product.availableStock}</TableCell>
                                         <TableCell>{product.minStockLevel}</TableCell>
-                                        <TableCell>
-                                            {product.isActive ? "Yes" : "No"}
-                                        </TableCell>
-                                        <TableCell>
+                                        <TableCell>{product.isActive ? "Yes" : "No"}</TableCell>
+                                        <TableCell className="space-x-2">
                                             <Button
                                                 variant="outline"
                                                 size="sm"
@@ -356,36 +351,18 @@ export default function ProductsPage() {
                                             >
                                                 Edit
                                             </Button>
+                                            {/* <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleViewPurchaseHistory(product)}
+                                            >
+                                                History
+                                            </Button> */}
                                         </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
-                    </div>
-
-                    {/* Pagination */}
-                    <div className="flex justify-between items-center pt-4">
-                        <p className="text-sm text-muted-foreground">
-                            Showing {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} of {filteredProducts.length}
-                        </p>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={currentPage === 1}
-                                onClick={() => setCurrentPage((p) => p - 1)}
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={endIndex >= filteredProducts.length}
-                                onClick={() => setCurrentPage((p) => p + 1)}
-                            >
-                                Next
-                            </Button>
-                        </div>
                     </div>
                 </div>
             )}

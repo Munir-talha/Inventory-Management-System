@@ -21,7 +21,6 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -46,16 +45,15 @@ export default function SalesPage() {
         quantity: 1,
         sellingPricePerItem: 0,
         dateOfSale: new Date().toISOString().split("T")[0],
-        // isOnlinePayment: false,
         costPerItem: 0,
-        paymentMode: "cash",
-        total: 0
+        total: 0,
     });
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [costOptions, setCostOptions] = useState([]);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
+    const [fetchingCosts, setFetchingCosts] = useState(false);
 
-    // Combobox states
     const [productOpen, setProductOpen] = useState(false);
     const [searchValue, setSearchValue] = useState("");
 
@@ -80,16 +78,38 @@ export default function SalesPage() {
         }
     };
 
-    const handleProductSelect = (productId) => {
+    const handleProductSelect = async (productId) => {
         const product = products.find((p) => p._id === productId);
         setSelectedProduct(product);
-        setForm((prevForm) => ({
-            ...prevForm,
-            productId,
-            sellingPricePerItem: product.sellingPrice || 0,
-            costPerItem: product.cost || 0,
-            total: (product.sellingPrice || 0) * prevForm.quantity,
-        }));
+        setFetchingCosts(true);
+
+        try {
+            const res = await axios.get(`/api/products/${productId}/purchase-costs`);
+            const options = res.data.data || [];
+            setCostOptions(options);
+
+            let defaultCost = options.length === 1 ? options[0].costPerItem : 0;
+
+            setForm((prevForm) => ({
+                ...prevForm,
+                productId,
+                sellingPricePerItem: product.sellingPrice || 0,
+                costPerItem: defaultCost,
+                total: (product.sellingPrice || 0) * prevForm.quantity,
+            }));
+        } catch (error) {
+            console.error("Failed to fetch cost options:", error);
+            setCostOptions([]);
+            setForm((prevForm) => ({
+                ...prevForm,
+                productId,
+                sellingPricePerItem: product.sellingPrice || 0,
+                costPerItem: 0,
+                total: (product.sellingPrice || 0) * prevForm.quantity,
+            }));
+        } finally {
+            setFetchingCosts(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -111,16 +131,16 @@ export default function SalesPage() {
             return;
         }
 
-        const updatedTotal = form.quantity * form.sellingPricePerItem;
-        if (isNaN(updatedTotal) || form.sellingPricePerItem === 0) {
-            setError("Invalid price or total calculation");
+        if (form.costPerItem <= 0) {
+            setError("Please select a valid cost per item");
             return;
         }
 
+        const updatedTotal = form.quantity * form.sellingPricePerItem;
+
         const submissionForm = {
             ...form,
-            // paymentMode: form.isOnlinePayment ? "easypaisa" : "cash",
-            total: updatedTotal
+            total: updatedTotal,
         };
 
         try {
@@ -131,13 +151,12 @@ export default function SalesPage() {
                 quantity: 1,
                 sellingPricePerItem: 0,
                 dateOfSale: new Date().toISOString().split("T")[0],
-                // isOnlinePayment: false,
                 costPerItem: 0,
-                paymentMode: "cash",
-                total: 0
+                total: 0,
             });
             setSelectedProduct(null);
             setSearchValue("");
+            setCostOptions([]);
             fetchSales();
         } catch (err) {
             setError("Failed to save sale");
@@ -151,7 +170,6 @@ export default function SalesPage() {
         selectedProduct.availableStock <= 0 ||
         form.quantity > selectedProduct.availableStock;
 
-    // Filter products based on search
     const filteredProducts = products.filter(product =>
         product.name.toLowerCase().includes(searchValue.toLowerCase())
     );
@@ -199,7 +217,7 @@ export default function SalesPage() {
                                                 placeholder="Search products..."
                                                 value={searchValue}
                                                 onInput={(e) => setSearchValue(e.currentTarget.value)}
-                                                className="border-b border-gray-200 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                                className="border-b border-gray-200"
                                             />
                                             <CommandEmpty className="py-6 text-center text-sm text-gray-500">
                                                 No product found.
@@ -237,8 +255,31 @@ export default function SalesPage() {
                                         <Input readOnly value={selectedProduct.availableStock} className="bg-gray-100 text-black" />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label>Actual Cost</Label>
-                                        <Input readOnly value={selectedProduct.cost} className="bg-gray-100 text-black" />
+                                        <Label>Select Cost</Label>
+                                        {fetchingCosts ? (
+                                            <p className="text-sm text-gray-500">Loading costs...</p>
+                                        ) : costOptions.length <= 1 ? (
+                                            <Input readOnly value={form.costPerItem} className="bg-gray-100 text-black" />
+                                        ) : (
+                                            <select
+                                                className="w-full p-2 border border-gray-300 rounded bg-white text-black"
+                                                value={form.costPerItem}
+                                                onChange={(e) =>
+                                                    setForm((prevForm) => ({
+                                                        ...prevForm,
+                                                        costPerItem: Number(e.target.value),
+                                                    }))
+                                                }
+                                                required
+                                            >
+                                                <option value="">Select cost</option>
+                                                {costOptions.map((option, idx) => (
+                                                    <option key={idx} value={option.costPerItem}>
+                                                        Rs. {option.costPerItem} (Date: {new Date(option.purchaseDate).toLocaleDateString()})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -288,27 +329,7 @@ export default function SalesPage() {
                                 <p className="font-semibold">Total: Rs. {total}</p>
                             </div>
 
-                            {/* <div className="flex items-center gap-2">
-                                <Checkbox
-                                    id="easypaisa"
-                                    checked={form.isOnlinePayment}
-                                    onCheckedChange={(checked) => setForm({ ...form, isOnlinePayment: checked })}
-                                />
-                                <Label htmlFor="easypaisa">Paid via Easypaisa</Label>
-                            </div> */}
-
                             {error && <p className="text-red-500 text-sm">{error}</p>}
-
-                            {selectedProduct && (!selectedProduct.isActive || selectedProduct.availableStock <= 0) && (
-                                <p className="text-sm text-red-500">Product is inactive or out of stock</p>
-                            )}
-
-                            {selectedProduct &&
-                                form.quantity > selectedProduct.availableStock && (
-                                    <p className="text-sm text-red-500">
-                                        Only {selectedProduct.availableStock} items left in stock
-                                    </p>
-                                )}
 
                             <Button
                                 type="submit"
@@ -322,7 +343,7 @@ export default function SalesPage() {
                 </Dialog>
             </div>
 
-            {/* Search + Table */}
+            {/* Table + Search */}
             {loading ? (
                 <div className="flex justify-center items-center py-10">
                     <div className="animate-spin h-6 w-6 border-4 border-t-transparent border-black rounded-full" />
@@ -330,7 +351,6 @@ export default function SalesPage() {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {/* Search Filter */}
                     <div className="flex justify-between items-center">
                         <Input
                             placeholder="Search by product name..."
@@ -343,7 +363,6 @@ export default function SalesPage() {
                         />
                     </div>
 
-                    {/* Table */}
                     <div className="overflow-auto rounded-lg border border-gray-200">
                         <Table className="min-w-[800px]">
                             <TableHeader className="sticky top-0 bg-white shadow z-10">
@@ -353,7 +372,7 @@ export default function SalesPage() {
                                     <TableHead>Qty</TableHead>
                                     <TableHead>Cost</TableHead>
                                     <TableHead>Selling Price</TableHead>
-                                    {/* <TableHead>Online Payment</TableHead> */}
+                                    <TableHead>Profit</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -364,20 +383,13 @@ export default function SalesPage() {
                                         <TableCell>{sale.quantity}</TableCell>
                                         <TableCell>Rs. {sale.costPerItem}</TableCell>
                                         <TableCell>Rs. {sale.sellingPricePerItem}</TableCell>
-                                        {/* <TableCell>
-                                            {sale.paymentMode !== "cash" ? (
-                                                <span className="text-green-600 font-bold">✔</span>
-                                            ) : (
-                                                <span className="text-red-500 font-bold">✘</span>
-                                            )}
-                                        </TableCell> */}
+                                        <TableCell>Rs. {(sale.sellingPricePerItem - sale.costPerItem) * sale.quantity}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                     </div>
 
-                    {/* Pagination */}
                     <div className="flex justify-between items-center pt-4">
                         <p className="text-sm text-muted-foreground">
                             Showing {startIndex + 1}-{Math.min(endIndex, filteredSales.length)} of {filteredSales.length}
