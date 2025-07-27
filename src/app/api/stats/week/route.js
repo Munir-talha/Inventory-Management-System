@@ -1,3 +1,4 @@
+// app/api/stats/week/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/connectDB";
 import Sale from "@/models/sale";
@@ -19,17 +20,19 @@ export async function GET() {
         dateOfSale: { $gte: startOfWeek, $lte: endOfDay },
     });
 
-    let totalSale = 0;
-    let totalCost = 0;
-    let totalItems = 0;
+    const totalSale = sales.reduce(
+        (sum, sale) => sum + sale.sellingPricePerItem * sale.quantity,
+        0
+    );
 
-    for (const sale of sales) {
-        totalSale += sale.sellingPricePerItem * sale.quantity;
-        totalCost += sale.costPerItem * sale.quantity;
-        totalItems += sale.quantity;
-    }
+    const totalCost = sales.reduce(
+        (sum, sale) => sum + sale.costPerItem * sale.quantity,
+        0
+    );
 
     const totalProfit = totalSale - totalCost;
+
+    const totalItems = sales.reduce((sum, sale) => sum + sale.quantity, 0);
 
     return NextResponse.json({
         success: true,

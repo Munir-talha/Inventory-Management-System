@@ -31,9 +31,21 @@ export async function POST(req) {
         await connectDB();
         const body = await req.json();
 
-        const { productId, quantity, costPerItem, sellingPricePerItem, dateOfSale } = body;
+        const {
+            productId,
+            quantity,
+            costPerItem,
+            sellingPricePerItem,
+            paymentMode,
+            dateOfSale,
+        } = body;
 
-        if (!productId || quantity == null || costPerItem == null || sellingPricePerItem == null) {
+        if (
+            !productId ||
+            quantity == null ||
+            costPerItem == null ||
+            sellingPricePerItem == null
+        ) {
             return NextResponse.json(
                 { success: false, message: "Missing or invalid sale data" },
                 { status: 400 }
@@ -51,37 +63,18 @@ export async function POST(req) {
             return NextResponse.json({ success: false, message: "Insufficient stock" }, { status: 400 });
         }
 
-        // LIFO: Reduce from latest purchases first
-        const sortedPurchases = [...product.purchases]
-            .filter(p => p.quantity > 0)
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        let remainingQty = quantity;
-        for (let i = 0; i < sortedPurchases.length && remainingQty > 0; i++) {
-            const purchase = sortedPurchases[i];
-            if (purchase.costPerUnit === costPerItem && purchase.quantity > 0) {
-                const deduction = Math.min(purchase.quantity, remainingQty);
-                purchase.quantity -= deduction;
-                remainingQty -= deduction;
-            }
-        }
-
-        if (remainingQty > 0) {
-            return NextResponse.json({ success: false, message: "Stock mismatch during deduction" }, { status: 400 });
-        }
-
-        // Save updated purchases and stock
-        product.availableStock -= quantity;
-        product.purchases = sortedPurchases;
-        await product.save();
-
         const sale = await Sale.create({
             productId,
             quantity,
             costPerItem,
             sellingPricePerItem,
             total,
+            paymentMode,
             dateOfSale: new Date(dateOfSale),
+        });
+
+        await Product.findByIdAndUpdate(productId, {
+            $inc: { availableStock: -quantity }
         });
 
         return NextResponse.json({ success: true, data: sale });
@@ -90,6 +83,4 @@ export async function POST(req) {
         return NextResponse.json({ success: false, message: "Failed to save sale" }, { status: 500 });
     }
 }
-
-
 

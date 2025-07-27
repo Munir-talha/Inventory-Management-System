@@ -35,7 +35,7 @@ export default function Header() {
             </button>
 
             <div className="flex items-center gap-3">
-                {/* {(isDashboard || isSale) && (
+                {(isDashboard || isSale) && (
                     <Button
                         onClick={() => setShowPurchaseModal(true)}
                         className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-4 py-2 text-sm shadow"
@@ -43,9 +43,9 @@ export default function Header() {
                         <Plus className="w-4 h-4 mr-2" />
                         New Sale
                     </Button>
-                )} */}
+                )}
 
-                {/* {(isDashboard || isProducts) && (
+                {(isDashboard || isProducts) && (
                     <Button
                         onClick={() => setShowProductModal(true)}
                         className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 text-sm shadow"
@@ -53,7 +53,7 @@ export default function Header() {
                         <Plus className="w-4 h-4 mr-2" />
                         New Item
                     </Button>
-                )} */}
+                )}
 
                 <Button
                     onClick={handleLogout}
