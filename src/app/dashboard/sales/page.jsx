@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import DashboardStats from "@/components/dashboard/DashboardStats";
 import {
     Dialog,
     DialogContent,
@@ -12,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import axios from "axios";
 import {
     Table,
     TableBody,
@@ -21,356 +19,506 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-} from "@/components/ui/command";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
+import { Plus, Edit, Trash2, ShoppingBag, Search, TrendingUp } from "lucide-react";
+import axios from "axios";
 
 export default function SalesPage() {
-    const [open, setOpen] = useState(false);
-    const [products, setProducts] = useState([]);
     const [sales, setSales] = useState([]);
-    const [form, setForm] = useState({
-        productId: "",
-        quantity: 1,
-        sellingPricePerItem: 0,
-        dateOfSale: new Date().toISOString().split("T")[0],
-        // isOnlinePayment: false,
-        costPerItem: 0,
-        paymentMode: "cash",
-        total: 0
-    });
-    const [selectedProduct, setSelectedProduct] = useState(null);
-    const [error, setError] = useState("");
+    const [purchases, setPurchases] = useState([]);
+    const [inventory, setInventory] = useState([]);
+    const [open, setOpen] = useState(false);
+    const [editingSale, setEditingSale] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // Combobox states
-    const [productOpen, setProductOpen] = useState(false);
-    const [searchValue, setSearchValue] = useState("");
-
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [submitting, setSubmitting] = useState(false);
+    const [itemSearchQuery, setItemSearchQuery] = useState("");
     const itemsPerPage = 10;
 
-    useEffect(() => {
-        axios.get("/api/products").then((res) => setProducts(res.data.data));
-        fetchSales();
-    }, []);
+    const [form, setForm] = useState({
+        itemId: "",
+        quantity: 1,
+        sellingPricePerItem: 0,
+        paymentMode: "cash",
+        dateOfSale: new Date().toISOString().split('T')[0],
+    });
+
+    const resetForm = () => {
+        setForm({
+            itemId: "",
+            quantity: 1,
+            sellingPricePerItem: 0,
+            paymentMode: "cash",
+            dateOfSale: new Date().toISOString().split('T')[0],
+        });
+        setItemSearchQuery("");
+    };
 
     const fetchSales = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
             const res = await axios.get("/api/sales");
             setSales(res.data.data);
         } catch (error) {
             console.error("Failed to fetch sales:", error);
+            alert("Failed to fetch sales");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleProductSelect = (productId) => {
-        const product = products.find((p) => p._id === productId);
-        setSelectedProduct(product);
-        setForm((prevForm) => ({
-            ...prevForm,
-            productId,
-            sellingPricePerItem: product.sellingPrice || 0,
-            costPerItem: product.cost || 0,
-            total: (product.sellingPrice || 0) * prevForm.quantity,
-        }));
+    const fetchPurchases = async () => {
+        try {
+            const res = await axios.get("/api/purchases");
+            console.log("purchases data: ", res.data.data);
+            setPurchases(res.data.data);
+        } catch (error) {
+            console.error("Failed to fetch purchases:", error);
+        }
+    };
+
+    const fetchInventory = async () => {
+        try {
+            const res = await axios.get("/api/inventory");
+            setInventory(res.data.data);
+        } catch (error) {
+            console.error("Failed to fetch inventory:", error);
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError("");
-
-        if (!selectedProduct) {
-            setError("Please select a product");
-            return;
-        }
-
-        if (!selectedProduct.isActive || selectedProduct.availableStock <= 0) {
-            setError("Product is inactive or out of stock");
-            return;
-        }
-
-        if (form.quantity > selectedProduct.availableStock) {
-            setError(`Only ${selectedProduct.availableStock} items left in stock`);
-            return;
-        }
-
-        const updatedTotal = form.quantity * form.sellingPricePerItem;
-        if (isNaN(updatedTotal) || form.sellingPricePerItem === 0) {
-            setError("Invalid price or total calculation");
-            return;
-        }
-
-        const submissionForm = {
-            ...form,
-            // paymentMode: form.isOnlinePayment ? "easypaisa" : "cash",
-            total: updatedTotal
-        };
+        setSubmitting(true);
 
         try {
-            await axios.post("/api/sales", submissionForm);
-            setOpen(false);
-            setForm({
-                productId: "",
-                quantity: 1,
-                sellingPricePerItem: 0,
-                dateOfSale: new Date().toISOString().split("T")[0],
-                // isOnlinePayment: false,
-                costPerItem: 0,
-                paymentMode: "cash",
-                total: 0
-            });
-            setSelectedProduct(null);
-            setSearchValue("");
+            const payload = {
+                ...form,
+                quantity: Number(form.quantity),
+                sellingPricePerItem: Number(form.sellingPricePerItem),
+                dateOfSale: new Date(form.dateOfSale),
+            };
+
+            if (editingSale) {
+                await axios.put(`/api/sales/${editingSale._id}`, payload);
+                alert("Sale updated successfully!");
+            } else {
+                await axios.post("/api/sales", payload);
+                alert("Sale recorded successfully!");
+            }
+
             fetchSales();
-        } catch (err) {
-            setError("Failed to save sale");
+            fetchInventory(); // Refresh inventory after sale
+            resetForm();
+            setEditingSale(null);
+            setOpen(false);
+        } catch (error) {
+            console.error("Error saving sale:", error);
+            const message = error.response?.data?.message || "Failed to save sale";
+            alert(message);
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    const total = form.quantity * form.sellingPricePerItem;
-    const disableSubmit =
-        !selectedProduct ||
-        !selectedProduct.isActive ||
-        selectedProduct.availableStock <= 0 ||
-        form.quantity > selectedProduct.availableStock;
+    const handleEdit = (sale) => {
+        setEditingSale(sale);
+        setForm({
+            itemId: sale.itemId?._id || "",
+            quantity: sale.quantity || 1,
+            sellingPricePerItem: sale.sellingPricePerItem || 0,
+            // paymentMode: sale.paymentMode || "cash",
+            dateOfSale: new Date(sale.dateOfSale).toISOString().split('T')[0],
+        });
+        setItemSearchQuery(sale.itemId?.name || "");
+        setOpen(true);
+    };
 
-    // Filter products based on search
-    const filteredProducts = products.filter(product =>
-        product.name.toLowerCase().includes(searchValue.toLowerCase())
-    );
+    const handleDelete = async (sale) => {
+        if (!confirm(`Are you sure you want to delete this sale record?`)) return;
+
+        try {
+            await axios.delete(`/api/sales/${sale._id}`);
+            alert("Sale deleted successfully!");
+            fetchSales();
+            fetchInventory(); // Refresh inventory after deletion
+        } catch (error) {
+            console.error("Error deleting sale:", error);
+            alert("Failed to delete sale");
+        }
+    };
+
+    useEffect(() => {
+        fetchSales();
+        fetchPurchases();
+        fetchInventory();
+    }, []);
 
     const filteredSales = sales.filter((sale) =>
-        sale.productId?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        sale.itemId?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    // Get unique items from purchases for the dropdownapi/sales
+    const getUniqueItems = () => {
+        const itemsMap = new Map();
+        purchases.forEach(purchase => {
+            if (purchase.itemId && purchase.isActive) {
+                const itemId = purchase.itemId._id;
+                const item = purchase.itemId;
+                if (!itemsMap.has(itemId)) {
+                    itemsMap.set(itemId, {
+                        ...item,
+                        costPerUnit: purchase.costPerUnit, // Add cost from purchase
+                        purchaseId: purchase._id
+                    });
+                }
+            }
+        });
+        return Array.from(itemsMap.values());
+    };
+
+    const uniqueItems = getUniqueItems();
+
+    const filteredItems = uniqueItems.filter((item) =>
+        item.name?.toLowerCase().includes(itemSearchQuery.toLowerCase())
+    );
+
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginatedSales = filteredSales.slice(startIndex, endIndex);
 
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-PK', {
+            style: 'currency',
+            currency: 'PKR',
+            minimumFractionDigits: 0,
+        }).format(amount);
+    };
+
+    // Get current stock for selected item
+    const getAvailableStock = (itemId) => {
+        console.log('Looking for itemId:', itemId);
+        console.log('Available inventory:', inventory);
+        const inventoryItem = inventory.find(inv => {
+            console.log('Comparing:', inv.itemId, 'with', itemId);
+            return inv.itemId.toString() === itemId.toString();
+        });
+        console.log('Found inventory item:', inventoryItem);
+        return inventoryItem ? inventoryItem.currentStock : 0;
+    };
+
+    const selectedItem = form.itemId ? uniqueItems.find(item => item._id === form.itemId) : null;
+    const availableStock = selectedItem ? getAvailableStock(selectedItem._id) : 0;
+
     return (
-        <div className="p-4">
-            <DashboardStats />
+        <div className="p-6">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Sales</h1>
+                <div className="flex items-center gap-3">
+                    <ShoppingBag className="h-8 w-8 text-blue-600" />
+                    <h1 className="text-3xl font-bold text-gray-800">Sales Records</h1>
+                </div>
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
-                        <Button onClick={() => setError("")}>+ New Sale</Button>
+                        <Button
+                            onClick={() => {
+                                setEditingSale(null);
+                                resetForm();
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Record Sale
+                        </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-lg bg-white p-6 rounded-xl shadow-md">
+                    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-xl border border-gray-200 bg-white">
                         <DialogHeader>
-                            <DialogTitle className="text-xl font-semibold">New Sale</DialogTitle>
+                            <DialogTitle className="text-2xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                                <ShoppingBag className="h-6 w-6 text-blue-600" />
+                                {editingSale ? "Edit Sale" : "Record New Sale"}
+                            </DialogTitle>
                         </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-1">
-                                <Label>Select Product</Label>
-                                <Popover open={productOpen} onOpenChange={setProductOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            aria-expanded={productOpen}
-                                            className="w-full justify-between text-black bg-white hover:bg-gray-50"
-                                        >
-                                            {form.productId
-                                                ? products.find((product) => product._id === form.productId)?.name
-                                                : "Select a product..."}
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white border border-gray-200 shadow-lg">
-                                        <Command className="bg-white">
-                                            <CommandInput
-                                                placeholder="Search products..."
-                                                value={searchValue}
-                                                onInput={(e) => setSearchValue(e.currentTarget.value)}
-                                                className="border-b border-gray-200 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                            />
-                                            <CommandEmpty className="py-6 text-center text-sm text-gray-500">
-                                                No product found.
-                                            </CommandEmpty>
-                                            <CommandGroup className="max-h-60 overflow-auto bg-white">
-                                                {filteredProducts.map((product) => (
-                                                    <CommandItem
-                                                        key={product._id}
-                                                        onSelect={() => {
-                                                            handleProductSelect(product._id);
-                                                            setProductOpen(false);
-                                                            setSearchValue("");
-                                                        }}
-                                                        className="cursor-pointer hover:bg-gray-50 px-3 py-2 bg-white text-black"
-                                                    >
-                                                        <Check
-                                                            className={cn(
-                                                                "mr-2 h-4 w-4",
-                                                                form.productId === product._id ? "opacity-100" : "opacity-0"
-                                                            )}
-                                                        />
-                                                        {product.name} {product.isActive ? "" : "(Inactive)"}
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                    Select Item *
+                                </Label>
+                                <div className="relative">
+                                    <Input
+                                        value={itemSearchQuery}
+                                        onChange={(e) => setItemSearchQuery(e.target.value)}
+                                        placeholder="Search for an item..."
+                                        className="bg-white text-black border-gray-300 focus:border-blue-500"
+                                    />
+                                    <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                                </div>
+                                {itemSearchQuery && (
+                                    <div className="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg bg-white">
+                                        {filteredItems.map((item) => {
+                                            const stock = getAvailableStock(item._id);
+                                            return (
+                                                <div
+                                                    key={item._id}
+                                                    onClick={() => {
+                                                        setForm({ ...form, itemId: item._id });
+                                                        setItemSearchQuery(item.name);
+                                                    }}
+                                                    className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                                                >
+                                                    <div className="font-medium">{item.name}</div>
+                                                    <div className="text-sm text-gray-500 flex justify-between">
+                                                        <span>{item.categoryId?.name}</span>
+                                                        <span className={`font-medium ${stock <= 0 ? 'text-red-600' : stock <= item.minStockLevel ? 'text-orange-600' : 'text-green-600'}`}>
+                                                            Stock: {stock}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-xs text-gray-400">
+                                                        Cost: {formatCurrency(item.costPerUnit)}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {filteredItems.length === 0 && (
+                                            <div className="p-3 text-gray-500 text-center">No items found</div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            {selectedProduct && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <Label>Available Stock</Label>
-                                        <Input readOnly value={selectedProduct.availableStock} className="bg-gray-100 text-black" />
+                            {selectedItem && (
+                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label className="text-sm font-medium text-gray-600">Available Stock</Label>
+                                            <p className={`text-lg font-semibold ${availableStock <= 0 ? 'text-red-600' : availableStock <= selectedItem.minStockLevel ? 'text-orange-600' : 'text-green-600'}`}>
+                                                {availableStock} units
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <Label className="text-sm font-medium text-gray-600">Category</Label>
+                                            <p className="text-lg font-medium text-gray-800">
+                                                {selectedItem.categoryId?.name || 'N/A'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <Label className="text-sm font-medium text-gray-600">Cost per Unit</Label>
+                                            <p className="text-lg font-medium text-gray-800">
+                                                {formatCurrency(selectedItem.costPerUnit)}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <Label className="text-sm font-medium text-gray-600">Min Stock Level</Label>
+                                            <p className="text-lg font-medium text-gray-800">
+                                                {selectedItem.minStockLevel} units
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <Label>Actual Cost</Label>
-                                        <Input readOnly value={selectedProduct.cost} className="bg-gray-100 text-black" />
-                                    </div>
+                                    {availableStock <= 0 && (
+                                        <div className="mt-2 text-sm text-red-600 font-medium">
+                                            ⚠️ Item is out of stock
+                                        </div>
+                                    )}
+                                    {availableStock > 0 && availableStock <= selectedItem.minStockLevel && (
+                                        <div className="mt-2 text-sm text-orange-600 font-medium">
+                                            ⚠️ Low stock warning
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <Label>Quantity</Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                        Sale Date *
+                                    </Label>
+                                    <Input
+                                        type="date"
+                                        value={form.dateOfSale}
+                                        onChange={(e) => setForm({ ...form, dateOfSale: e.target.value })}
+                                        required
+                                        className="bg-white text-black border-gray-300 focus:border-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                        Payment Mode *
+                                    </Label>
+                                    <select
+                                        value={form.paymentMode}
+                                        onChange={(e) => setForm({ ...form, paymentMode: e.target.value })}
+                                        required
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-black focus:border-blue-500 focus:outline-none"
+                                    >
+                                        <option value="cash">Cash</option>
+                                        <option value="easypaisa">EasyPaisa</option>
+                                        <option value="bank">Bank Transfer</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                        Quantity *
+                                    </Label>
                                     <Input
                                         type="number"
                                         value={form.quantity}
-                                        onChange={(e) =>
-                                            setForm({
-                                                ...form,
-                                                quantity: Math.max(1, Number(e.target.value)),
-                                            })
-                                        }
+                                        onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                                        placeholder="Enter quantity"
                                         required
-                                        className="bg-white text-black"
+                                        min="1"
+                                        max={availableStock}
+                                        className="bg-white text-black border-gray-300 focus:border-blue-500"
                                     />
+                                    {form.quantity > availableStock && availableStock > 0 && (
+                                        <p className="text-sm text-red-600 mt-1">
+                                            Only {availableStock} units available
+                                        </p>
+                                    )}
                                 </div>
-                                <div className="space-y-1">
-                                    <Label>Selling Price</Label>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                        Selling Price per Unit (PKR) *
+                                    </Label>
                                     <Input
                                         type="number"
+                                        step="0.01"
                                         value={form.sellingPricePerItem}
-                                        onChange={(e) => setForm({ ...form, sellingPricePerItem: Number(e.target.value) })}
+                                        onChange={(e) => setForm({ ...form, sellingPricePerItem: e.target.value })}
+                                        placeholder="Enter selling price"
                                         required
-                                        className="bg-white text-black"
+                                        min="0"
+                                        className="bg-white text-black border-gray-300 focus:border-blue-500"
                                     />
                                 </div>
                             </div>
 
-                            <div className="space-y-1">
-                                <Label>Date</Label>
-                                <Input
-                                    type="date"
-                                    value={form.dateOfSale}
-                                    onChange={(e) => setForm({ ...form, dateOfSale: e.target.value })}
-                                    required
-                                    className="bg-white text-black"
-                                />
-                            </div>
-
-                            <div className="p-4 border rounded-md bg-gray-50">
-                                <p className="text-sm">Total Items: {form.quantity}</p>
-                                <p className="text-sm">Price per Item: {form.sellingPricePerItem}</p>
-                                <p className="font-semibold">Total: Rs. {total}</p>
-                            </div>
-
-                            {/* <div className="flex items-center gap-2">
-                                <Checkbox
-                                    id="easypaisa"
-                                    checked={form.isOnlinePayment}
-                                    onCheckedChange={(checked) => setForm({ ...form, isOnlinePayment: checked })}
-                                />
-                                <Label htmlFor="easypaisa">Paid via Easypaisa</Label>
-                            </div> */}
-
-                            {error && <p className="text-red-500 text-sm">{error}</p>}
-
-                            {selectedProduct && (!selectedProduct.isActive || selectedProduct.availableStock <= 0) && (
-                                <p className="text-sm text-red-500">Product is inactive or out of stock</p>
+                            {form.sellingPricePerItem && form.quantity && selectedItem && (
+                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                    <div className="space-y-2">
+                                        <div className="text-sm text-blue-700 font-medium">
+                                            Total Sale Amount: {formatCurrency(Number(form.sellingPricePerItem) * Number(form.quantity))}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                            Total Cost: {formatCurrency(selectedItem.costPerUnit * Number(form.quantity))}
+                                        </div>
+                                        <div className={`text-sm font-medium ${(Number(form.sellingPricePerItem) - selectedItem.costPerUnit) * Number(form.quantity) >= 0
+                                            ? 'text-green-700'
+                                            : 'text-red-700'
+                                            }`}>
+                                            Estimated Profit: {formatCurrency((Number(form.sellingPricePerItem) - selectedItem.costPerUnit) * Number(form.quantity))}
+                                        </div>
+                                    </div>
+                                </div>
                             )}
-
-                            {selectedProduct &&
-                                form.quantity > selectedProduct.availableStock && (
-                                    <p className="text-sm text-red-500">
-                                        Only {selectedProduct.availableStock} items left in stock
-                                    </p>
-                                )}
 
                             <Button
                                 type="submit"
-                                className="w-full bg-green-600 hover:bg-green-700 text-white"
-                                disabled={disableSubmit}
+                                disabled={submitting || !form.itemId || availableStock <= 0 || form.quantity > availableStock}
+                                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 py-2.5 rounded-lg font-medium disabled:opacity-50"
                             >
-                                Save Sale
+                                {submitting
+                                    ? (editingSale ? "Updating..." : "Recording...")
+                                    : (editingSale ? "Update Sale" : "Record Sale")
+                                }
                             </Button>
                         </form>
                     </DialogContent>
                 </Dialog>
             </div>
 
-            {/* Search + Table */}
+            {/* Search and Table */}
             {loading ? (
-                <div className="flex justify-center items-center py-10">
-                    <div className="animate-spin h-6 w-6 border-4 border-t-transparent border-black rounded-full" />
-                    <span className="ml-2 text-muted-foreground text-sm">Loading Sales...</span>
+                <div className="flex justify-center items-center py-20">
+                    <div className="animate-spin h-8 w-8 border-4 border-t-transparent border-blue-600 rounded-full" />
+                    <span className="ml-3 text-gray-600">Loading sales...</span>
                 </div>
             ) : (
-                <div className="space-y-4">
-                    {/* Search Filter */}
+                <div className="space-y-6">
                     <div className="flex justify-between items-center">
                         <Input
-                            placeholder="Search by product name..."
-                            className="max-w-sm"
+                            placeholder="Search by item name..."
+                            className="max-w-md border-gray-300 focus:border-blue-500"
                             value={searchQuery}
                             onChange={(e) => {
                                 setSearchQuery(e.target.value);
                                 setCurrentPage(1);
                             }}
                         />
+                        <div className="text-sm text-gray-500">
+                            Total Records: {filteredSales.length}
+                        </div>
                     </div>
 
-                    {/* Table */}
-                    <div className="overflow-auto rounded-lg border border-gray-200">
-                        <Table className="min-w-[800px]">
-                            <TableHeader className="sticky top-0 bg-white shadow z-10">
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                        <Table>
+                            <TableHeader className="bg-gray-50">
                                 <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Item Name</TableHead>
-                                    <TableHead>Qty</TableHead>
-                                    <TableHead>Cost</TableHead>
-                                    <TableHead>Selling Price</TableHead>
-                                    {/* <TableHead>Online Payment</TableHead> */}
+                                    <TableHead className="font-semibold text-gray-700">Date</TableHead>
+                                    <TableHead className="font-semibold text-gray-700">Item</TableHead>
+                                    <TableHead className="font-semibold text-gray-700">Quantity</TableHead>
+                                    <TableHead className="font-semibold text-gray-700">Cost/Unit</TableHead>
+                                    <TableHead className="font-semibold text-gray-700">Selling Price</TableHead>
+                                    <TableHead className="font-semibold text-gray-700">Total</TableHead>
+                                    <TableHead className="font-semibold text-gray-700">Profit</TableHead>
+                                    <TableHead className="font-semibold text-gray-700">Payment</TableHead>
+                                    <TableHead className="font-semibold text-gray-700 text-center">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {paginatedSales.map((sale) => (
                                     <TableRow key={sale._id} className="hover:bg-gray-50">
-                                        <TableCell>{new Date(sale.dateOfSale).toLocaleDateString()}</TableCell>
-                                        <TableCell>{sale.productId?.name || "-"}</TableCell>
+                                        <TableCell>
+                                            {new Date(sale.dateOfSale).toLocaleDateString()}
+                                        </TableCell>
+                                        <TableCell className="font-medium">
+                                            <div>
+                                                {sale.itemId?.name || "N/A"}
+                                                <div className="text-xs text-gray-500">
+                                                    {sale.itemId?.categoryId?.name}
+                                                </div>
+                                            </div>
+                                        </TableCell>
                                         <TableCell>{sale.quantity}</TableCell>
-                                        <TableCell>Rs. {sale.costPerItem}</TableCell>
-                                        <TableCell>Rs. {sale.sellingPricePerItem}</TableCell>
-                                        {/* <TableCell>
-                                            {sale.paymentMode !== "cash" ? (
-                                                <span className="text-green-600 font-bold">✔</span>
-                                            ) : (
-                                                <span className="text-red-500 font-bold">✘</span>
-                                            )}
-                                        </TableCell> */}
+                                        <TableCell>{formatCurrency(sale.costPerItem)}</TableCell>
+                                        <TableCell>{formatCurrency(sale.sellingPricePerItem)}</TableCell>
+                                        <TableCell className="font-semibold">
+                                            {formatCurrency(sale.total)}
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className={`font-semibold ${sale.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                {formatCurrency(sale.profit)}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${sale.paymentMode === 'cash'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-blue-100 text-blue-800'
+                                                }`}>
+                                                {sale.paymentMode}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex gap-2 justify-center">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleEdit(sale)}
+                                                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleDelete(sale)}
+                                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -379,8 +527,8 @@ export default function SalesPage() {
 
                     {/* Pagination */}
                     <div className="flex justify-between items-center pt-4">
-                        <p className="text-sm text-muted-foreground">
-                            Showing {startIndex + 1}-{Math.min(endIndex, filteredSales.length)} of {filteredSales.length}
+                        <p className="text-sm text-gray-600">
+                            Showing {startIndex + 1}-{Math.min(endIndex, filteredSales.length)} of {filteredSales.length} sales
                         </p>
                         <div className="flex gap-2">
                             <Button
@@ -388,6 +536,7 @@ export default function SalesPage() {
                                 size="sm"
                                 disabled={currentPage === 1}
                                 onClick={() => setCurrentPage((p) => p - 1)}
+                                className="border-gray-300"
                             >
                                 Previous
                             </Button>
@@ -396,6 +545,7 @@ export default function SalesPage() {
                                 size="sm"
                                 disabled={endIndex >= filteredSales.length}
                                 onClick={() => setCurrentPage((p) => p + 1)}
+                                className="border-gray-300"
                             >
                                 Next
                             </Button>
